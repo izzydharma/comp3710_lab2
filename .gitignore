@@ -1,0 +1,10 @@
+# Ignore generated model checkpoints
+*.pt
+
+# Ignore dataset directory
+/data/
+/keras_png_slices_data/
+# Optional: ignore common local results and caches
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
