@@ -1,0 +1,23 @@
+{
+  "task": "cifar10",
+  "test_accuracy": 0.9412,
+  "test_loss": 0.2324169189453125,
+  "best_validation_accuracy": 0.9446,
+  "selected_epoch": 100,
+  "seconds_to_selected_checkpoint": 380.9731493429281,
+  "total_training_seconds": 382.18424226902425,
+  "validation_threshold_seconds": {
+    "over_90_percent": 287.3070512469858,
+    "at_least_94_percent": 362.0159383160062
+  },
+  "train_samples": 45000,
+  "validation_samples": 5000,
+  "test_samples": 10000,
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "timing_definition": "Training wall time includes validation and checkpoint saves; excludes downloads, model setup, final test and plots.",
+  "evaluation": "Best checkpoint selected only by validation accuracy; final test evaluated after training.",
+  "over_90_percent_test": true,
+  "at_least_94_percent_test": true,
+  "at_least_94_percent_and_total_training_under_360s": false,
+  "note": "Validation threshold times are not test accuracy benchmarks. Laptop results do not replace the Rangpur demonstration."
+}
