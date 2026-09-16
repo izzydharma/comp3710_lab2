@@ -1,0 +1,12 @@
+{
+  "generated_samples": 64,
+  "mean_pixel_standard_deviation": 0.0036358125507831573,
+  "mean_pairwise_mse_32x32": 4.807497680303641e-05,
+  "mean_nearest_training_preview_mse_32x32": 0.0035975980572402477,
+  "reference_training_slices": 256,
+  "note": "Small diversity or repeated images may indicate mode collapse. These numbers do not establish realism, novelty or absence of memorisation.",
+  "training_seconds": 839.4881786559708,
+  "image_size": 128,
+  "slices_per_volume": 0,
+  "checkpoint_selection": "Last training epoch; no automatic claim of best realism."
+}

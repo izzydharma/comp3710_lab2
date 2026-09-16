@@ -1,0 +1,15 @@
+{
+  "generated_samples": 64,
+  "mean_pixel_standard_deviation": 0.05490882694721222,
+  "mean_pairwise_mse_32x32": 0.008226247504353523,
+  "mean_nearest_training_preview_mse_32x32": 0.002865221817046404,
+  "reference_training_slices": 256,
+  "note": "Small diversity or repeated images may indicate mode collapse. These numbers do not establish realism, novelty or absence of memorisation.",
+  "algorithm": "wgan-gp",
+  "n_critic": 5,
+  "gp_weight": 10.0,
+  "training_seconds": 710.4654640080407,
+  "image_size": 128,
+  "slices_per_volume": 0,
+  "checkpoint_selection": "Last training epoch; no automatic claim of best realism."
+}
