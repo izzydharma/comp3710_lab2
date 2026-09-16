@@ -32,5 +32,5 @@ if not torch.cuda.is_available():
 print("GPU:", torch.cuda.get_device_name(0))
 PY
 
-python -u part3.py --device cuda --workers "${SLURM_CPUS_PER_TASK:-4}"
+python -u part3.py --device cuda --amp --gpu-data --workers 0
 echo "Finished $(date)"

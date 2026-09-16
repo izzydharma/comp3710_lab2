@@ -12,8 +12,10 @@ Assignment requirement: Part 3.2 uses ResNet-18 trained from scratch. The >90% a
 targets require actual experiments; this script does not guarantee them.
 The cluster demonstration must still be performed on Rangpur.
 
-GPU runs cache uint8 CIFAR-10 images and augment batches on-device by default.
-Use --no-gpu-data for the original CPU data pipeline. Cache setup is timed.
+CUDA and mixed precision are enabled by default. GPU runs cache all splits as
+uint8 images, augment batches and calculate evaluation metrics on-device.
+Use --device cpu for CPU execution or --no-gpu-data for CPU data loaders.
+Cache setup is timed. File loading/splitting, logging and plotting use the CPU.
 
 Sources: COMP3710 Lab 2, Part 3.2.
 ChatGPT assisted with implementation and explanations.
@@ -35,7 +37,7 @@ matplotlib.use("Agg")  # Save plots on both laptops and headless cluster nodes.
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.metrics import ConfusionMatrixDisplay, classification_report
+from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.model_selection import train_test_split
 from torch import nn
 from torch.utils.data import DataLoader, Subset
@@ -286,15 +288,44 @@ def run_epoch(model, loader, device, amp, optimizer=None, scaler=None, collect=F
             # Weight each batch mean by its size so the smaller last batch counts correctly.
             total_loss += loss.detach().float() * labels.size(0)
             total_correct += (predicted == labels).sum()
-            # Copy individual predictions to the CPU only when a report is requested.
+            # Keep report inputs on-device too; do not synchronise each test batch.
             if collect:
-                truth.extend(labels.cpu().tolist())
-                predictions.extend(predicted.cpu().tolist())
-    mean_loss = total_loss.item() / total
+                truth.append(labels.detach())
+                predictions.append(predicted)
+    mean_loss, accuracy = torch.stack((total_loss / total, total_correct / total)).tolist()
     if not math.isfinite(mean_loss):
         raise RuntimeError("Non-finite loss; try a lower learning rate or --no-amp.")
-    return dict(loss=mean_loss, accuracy=total_correct.item() / total,
-                truth=truth, predictions=predictions)
+    return dict(loss=mean_loss, accuracy=accuracy,
+                truth=torch.cat(truth) if collect else None,
+                predictions=torch.cat(predictions) if collect else None)
+
+
+def evaluation_metrics(truth, predictions, classes):
+    """Calculate the confusion matrix and report metrics on the input device."""
+    count = len(classes)
+    matrix = torch.bincount(truth * count + predictions,
+                            minlength=count * count).reshape(count, count)
+    support = matrix.sum(1)
+    true_positive = matrix.diag().double()
+    precision = true_positive / matrix.sum(0).clamp_min(1)
+    recall = true_positive / support.clamp_min(1)
+    f1 = 2 * true_positive / (matrix.sum(0) + support).clamp_min(1)
+    scores = torch.stack((precision, recall, f1), dim=1)
+    total = support.sum()
+    macro = scores.mean(0)
+    weighted = (scores * support[:, None]).sum(0) / total.clamp_min(1)
+    accuracy = true_positive.sum() / total.clamp_min(1)
+    # Transfer only completed results for text formatting and matplotlib.
+    rows = torch.cat((
+        torch.cat((scores, support[:, None]), dim=1),
+        torch.cat((macro, total[None]))[None, :],
+        torch.cat((weighted, total[None]))[None, :],
+    )).cpu().tolist()
+    lines = [f"{'':>14} {'precision':>9} {'recall':>9} {'f1-score':>9} {'support':>9}", ""]
+    for name, (p, r, f, n) in zip([*classes, 'macro avg', 'weighted avg'], rows):
+        lines.append(f"{name:>14} {p:9.2f} {r:9.2f} {f:9.2f} {int(n):9d}")
+    lines.extend(("", f"Accuracy: {accuracy.item():.4f}"))
+    return matrix.cpu().numpy(), "\n".join(lines) + "\n"
 
 
 def save_history(history, output):
@@ -318,16 +349,13 @@ def save_history(history, output):
 
 def save_evaluation(model, loader, spec, args, result):
     classes = spec["classes"]
-    labels = list(range(len(classes)))
     # Precision, recall and F1 show performance per class; the confusion matrix
     # shows which true classes are being mistaken for other classes.
-    report = classification_report(result["truth"], result["predictions"],
-                                   labels=labels, target_names=classes, zero_division=0)
+    matrix, report = evaluation_metrics(result["truth"], result["predictions"], classes)
     print(report)
     (args.output / "classification_report.txt").write_text(report, encoding="utf-8")
     fig, ax = plt.subplots(figsize=(9, 8))
-    ConfusionMatrixDisplay.from_predictions(
-        result["truth"], result["predictions"], labels=labels, display_labels=classes,
+    ConfusionMatrixDisplay(matrix, display_labels=classes).plot(
         ax=ax, xticks_rotation=90, colorbar=False,
     )
     fig.tight_layout()
@@ -338,18 +366,19 @@ def save_evaluation(model, loader, spec, args, result):
     model.eval()
     with torch.inference_mode(), torch.autocast(device_type=args.device.type, enabled=args.amp):
         predicted = model(images.to(args.device)).argmax(1).cpu()
-    # Make a separate CPU copy for plotting, then undo normalisation below.
-    shown = images.detach().cpu().clone()
+    # Undo normalisation on the compute device before copying pixels for plotting.
+    shown = images.detach().to(args.device).clone()
     truth = truth.cpu()
     if spec["task"] == "cifar10":
-        shown = shown * torch.tensor(spec["std"])[None, :, None, None]
-        shown += torch.tensor(spec["mean"])[None, :, None, None]
+        shown = shown * torch.tensor(spec["std"], device=args.device)[None, :, None, None]
+        shown += torch.tensor(spec["mean"], device=args.device)[None, :, None, None]
+    shown = shown.clamp_(0, 1).cpu()
     fig, axes = plt.subplots(3, 4, figsize=(13, 8))
     for i, ax in enumerate(axes.flat):
         ax.axis("off")
         if i >= len(shown):
             continue
-        image = shown[i].permute(1, 2, 0).numpy().clip(0, 1)
+        image = shown[i].permute(1, 2, 0).numpy()
         ax.imshow(image[..., 0] if image.shape[-1] == 1 else image, cmap="gray")
         ax.set_title(f"True: {classes[int(truth[i])]}\nPred: {classes[int(predicted[i])]}",
                      fontsize=9, color="green" if truth[i] == predicted[i] else "red")
@@ -374,7 +403,7 @@ def main():
                         help="Training default scales from 0.1 at batch size 128; demo default is 0.001")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--workers", type=int, default=0 if os.name == "nt" else 4)
-    parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
+    parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="cuda")
     parser.add_argument("--amp", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--download", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--gpu-data", action=argparse.BooleanOptionalAction, default=True,
@@ -416,6 +445,7 @@ def main():
     config = {key: str(value) if isinstance(value, (Path, torch.device)) else value
               for key, value in vars(args).items()}
     config.update(python=platform.python_version(), torch=str(torch.__version__),
+                  fused_sgd=args.device.type == "cuda",
                   gpu=torch.cuda.get_device_name(args.device) if args.device.type == "cuda" else None)
     (args.output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
     print("Device:", args.device, "GPU:", config["gpu"], "Mixed precision:", args.amp, flush=True)
@@ -443,7 +473,8 @@ def main():
         inference_seconds = time.perf_counter() - start
         save_evaluation(model, test_loader, spec, args, result)
         # Demonstrate one new epoch; the supplied checkpoint remains unchanged.
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr or 0.001, momentum=0.9, weight_decay=5e-4)
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr or 0.001, momentum=0.9,
+                                    weight_decay=5e-4, fused=args.device.type == "cuda")
         sync(args.device)
         start = time.perf_counter()
         trained = run_epoch(model, train_loader, args.device, args.amp, optimizer, scaler)
@@ -459,7 +490,9 @@ def main():
         # Linear learning-rate scaling is a heuristic: batch size 512 gives lr=0.4.
         # It does not guarantee identical optimisation to batch size 128 and lr=0.1.
         lr = args.lr or (0.1 * args.batch_size / 128)
-        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=5e-4)
+        # Fused CUDA SGD also consumes AMP's overflow flag on-device.
+        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9,
+                                    weight_decay=5e-4, fused=args.device.type == "cuda")
         # Momentum smooths SGD updates; weight decay penalises large weights.
         # The cosine schedule gradually lowers the learning rate across training.
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
