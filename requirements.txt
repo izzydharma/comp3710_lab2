@@ -1,0 +1,8 @@
+# Install a matching torch/torchvision build first; see README.md.
+torch
+torchvision
+numpy
+matplotlib
+scikit-learn
+Pillow
+notebook

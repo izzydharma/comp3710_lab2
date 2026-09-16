@@ -8,3 +8,20 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+
+# Additional local/generated files (existing tracked evidence remains tracked).
+*.pth
+*.ckpt
+*.zip
+*.out
+*.err
+.venv/
+venv/
+.env
+.env.*
+tmp*/
+.DS_Store
+Thumbs.db
+# Local study guides are not required to execute this repository.
+/COMP3710_All_Parts_Demo_Workflows_and_Code_Guide.pdf
