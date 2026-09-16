@@ -1,0 +1,10 @@
+{
+  "loss": 0.0053572217002511024,
+  "mse": 0.005079447839628248,
+  "kl": 4.551047086715698,
+  "selected_epoch": 17,
+  "training_seconds": 305.83873638883233,
+  "evaluation": "Held-out subjects; posterior-mean reconstruction, not a sampled ELBO estimate.",
+  "image_size": 128,
+  "slices_per_volume": 0
+}

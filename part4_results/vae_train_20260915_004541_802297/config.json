@@ -1,0 +1,20 @@
+{
+  "mode": "train",
+  "data_dir": "/home/Student/s4994398/Lab_2/keras_png_slices_data",
+  "checkpoint": null,
+  "output": "/home/Student/s4994398/Lab_2/part4_results/vae_train_20260915_004541_802297",
+  "epochs": 50,
+  "batch_size": 32,
+  "lr": 0.001,
+  "image_size": 128,
+  "slices_per_volume": 0,
+  "seed": 42,
+  "device": "cuda",
+  "workers": 4,
+  "amp": true,
+  "latent_dim": 2,
+  "beta": 1.0,
+  "kl_warmup": 10,
+  "torch_version": "2.14.0+cu130",
+  "gpu": "NVIDIA A100-PCIE-40GB"
+}
