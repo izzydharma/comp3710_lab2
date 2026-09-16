@@ -39,6 +39,7 @@ MASK_VALUES = [0, 85, 170, 255]
 
 
 # Accept either the dataset folder itself or the common nested extraction layouts.
+# DATA LOCATION: accept the supplied extraction layouts; no images are loaded here.
 def find_data_folder(root):
     root = Path(root)
     for candidate in (root, root / "keras_png_slices_data",
@@ -50,6 +51,8 @@ def find_data_folder(root):
                             "Keep the extracted dataset beside this script or use --data-dir PATH.")
 
 
+# ONE SAMPLE: read a grayscale slice on demand. The DataLoader stacks samples into batches.
+# Images are floating-point intensities; segmentation masks are integer category IDs.
 class PngSlices(Dataset):
     """One preprocessed MRI PNG and its paired categorical mask per sample."""
     def __init__(self, rows, image_size, class_values=None, slices_per_volume=0):
@@ -101,6 +104,7 @@ class PngSlices(Dataset):
 
 
 # Command-line options override these defaults without editing the training code.
+# USER SETTINGS: define command-line defaults so the same file works from Run or a terminal.
 def parser_for(description, epochs, batch_size, lr, slices=0):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--mode", choices=("train", "evaluate"), default="train")
@@ -120,6 +124,8 @@ def parser_for(description, epochs, batch_size, lr, slices=0):
     return parser
 
 
+# RUN SETUP: validate settings, choose hardware/output paths and read checkpoint metadata.
+# This prepares an experiment; it does not perform a training epoch.
 def configure(parser, task):
     args = parser.parse_args()
     if args.epochs < 1 or args.batch_size < 1 or args.lr <= 0 or args.workers < 0 or args.slices_per_volume < 0:
@@ -167,6 +173,7 @@ def configure(parser, task):
 
 
 # Convert Path/device objects into JSON-compatible values and record the environment.
+# RECORD KEEPING: convert runtime settings to values that can be written to JSON.
 def configuration(args):
     config = {key: str(value) if isinstance(value, (Path, torch.device)) else value
               for key, value in vars(args).items()}
@@ -177,6 +184,8 @@ def configuration(args):
 
 # Use the supplied splits; training changes weights, validation selects a model,
 # and held-out test cases measure its final performance. The GAN uses no validation selection.
+# DATA WORKFLOW: discover files -> identify subjects -> reject split overlap -> form batches.
+# A subject is a person/case; a sample is one slice. Keep these units distinct in the demo.
 def make_loaders(args, segmentation=False, checkpoint=None):
     root = find_data_folder(args.data_dir)
     datasets, split = {}, {}
@@ -223,22 +232,27 @@ def make_loaders(args, segmentation=False, checkpoint=None):
 
 
 # GPU launches are asynchronous; synchronise before reading a wall-clock timer.
+# TIMING: CPU code can continue while CUDA runs; wait before taking a meaningful timestamp.
 def sync(device):
     if device.type == "cuda":
         torch.cuda.synchronize(device)
 
 
+# REPORT OUTPUT: write readable measurements/settings; this does not alter model weights.
 def save_json(path, data):
     Path(path).write_text(json.dumps(data, indent=2, allow_nan=False), encoding="utf-8")
 
 
 # Save weights plus the settings/splits needed for evaluation. Optimiser state is
 # not included, so these checkpoints are not complete training-resume snapshots.
+# CHECKPOINT OUTPUT: save learned weights and the metadata needed to interpret them.
+# A state_dict contains parameters and registered buffers, not the Python model class itself.
 def save_model(path, task, args, split, epoch, **payload):
     torch.save(dict(task=task, config=configuration(args), split=split, epoch=epoch, **payload), path)
 
 
 # CSV preserves exact epoch values; the PNG makes the learning trends easy to inspect.
+# LEARNING CURVES: record epoch measurements to inspect progress and possible overfitting.
 def save_history(output, history, columns):
     with (output / "history.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=history[0].keys())
@@ -256,6 +270,7 @@ def save_history(output, history, columns):
 
 
 # Detach removes autograd tracking; matplotlib needs CPU images in the display range.
+# VISUAL OUTPUT: arrange images for inspection; a small grid is not a complete test evaluation.
 def image_grid(images, path, columns=8, title=None):
     images = images.detach().float().cpu().clamp(0, 1)
     rows = math.ceil(len(images) / columns)
@@ -272,6 +287,7 @@ def image_grid(images, path, columns=8, title=None):
 
 
 # Fail clearly on NaN/infinite losses instead of silently saving invalid results.
+# ERROR CHECK: NaN/Inf signals an invalid numeric result; stop rather than report it as success.
 def require_finite(value):
     if not math.isfinite(value):
         raise RuntimeError("Non-finite loss. Check input data or try a lower learning rate / --no-amp.")
@@ -291,6 +307,9 @@ from torch import nn
 
 # VAE flow: MRI -> encoder -> Gaussian latent distribution -> sample z -> decoder.
 # B = batch size; latent_dim = number of coordinates used to represent each image.
+# VAE ARCHITECTURE: image -> encoder -> mean/log variance -> sampled z -> decoder -> image.
+# For defaults: [B,1,128,128] -> [B,256,8,8] -> two [B,2] heads -> reconstruction.
+# There is no mask target: the input MRI itself supplies the reconstruction target.
 class VAE(nn.Module):
     def __init__(self, image_size=128, latent_dim=2):
         super().__init__()
@@ -332,10 +351,15 @@ class VAE(nn.Module):
         # Reparameterisation: z = mu + sigma * epsilon, epsilon ~ N(0, I).
         # exp(0.5 * log_variance) is sigma; gradients can flow into mu and sigma.
         # Evaluation uses mu directly (sample=False), so reconstruction is deterministic.
+        # exp(log variance) is variance; exp(0.5 * log variance) is standard deviation.
+        # Reparameterisation keeps the noise independent while gradients reach mean and log variance.
         latent = mean + torch.exp(0.5 * log_variance) * torch.randn_like(mean) if sample else mean
         return self.decode(latent), mean, log_variance
 
 
+# OBJECTIVE: accurate pixels (MSE) plus a latent prior penalty (KL).
+# KL is summed over latent coordinates, averaged over images, then scaled by pixel count here.
+# A lower total loss is a trade-off between reconstruction and regularisation, not an accuracy.
 def vae_loss(reconstructed, images, mean, log_variance, beta):
     # Float32 loss arithmetic keeps the KL exponential stable under autocast.
     # MSE averages squared reconstruction error over every pixel and every image.
@@ -343,6 +367,7 @@ def vae_loss(reconstructed, images, mean, log_variance, beta):
     mean, log_variance = mean.float(), log_variance.float()
     # Closed-form KL(q(z|x) || N(0,I)): sum latent coordinates, then average images.
     # It encourages a latent distribution that can be sampled smoothly from the prior.
+    # If mean=0 and log_variance=0, the posterior equals the unit Gaussian and KL is zero.
     kl = -0.5 * (1 + log_variance - mean.square() - log_variance.exp()).sum(1).mean()
     # Both summed image error and KL are divided by the number of image pixels.
     # beta controls the reconstruction/regularisation trade-off; logged KL is unscaled.
@@ -350,6 +375,8 @@ def vae_loss(reconstructed, images, mean, log_variance, beta):
     return objective, reconstruction, kl
 
 
+# EPOCH WORKFLOW: MRI batch -> reconstruct -> compute MSE/KL -> update only during training.
+# The sample flag uses noise during training and the posterior mean during evaluation.
 def epoch(model, loader, args, beta, optimizer=None, scaler=None):
     # Supplying an optimiser enables training; without one this is evaluation only.
     training = optimizer is not None
@@ -381,6 +408,8 @@ def epoch(model, loader, args, beta, optimizer=None, scaler=None):
     return dict(loss=values[0], mse=values[1], kl=values[2])
 
 
+# THREE VIEWS: paired reconstructions, a decoded latent grid, and encoded test-image positions.
+# The latent grid starts from chosen coordinates; the embedding starts from real images.
 @torch.inference_mode()
 def visualise(model, loader, args):
     model.eval()
@@ -393,6 +422,7 @@ def visualise(model, loader, args):
                title="Alternating original / reconstruction")
     # Decode a 12x12 grid in the first two latent coordinates to visualise the manifold.
     # For larger latent spaces, all remaining coordinates are held at zero.
+    # Changing one latent coordinate at a time lets us inspect how the learned decoder varies images.
     positions = torch.linspace(-2.5, 2.5, 12, device=args.device)
     latent = torch.zeros(144, args.latent_dim, device=args.device)
     for index, (y, x) in enumerate(torch.cartesian_prod(positions.flip(0), positions)):
@@ -421,6 +451,8 @@ def visualise(model, loader, args):
                         subject_ids=np.asarray(subject_ids, dtype=str))
 
 
+# DEMO ROUTE: build VAE -> train with KL warm-up -> select fixed-beta validation loss -> test.
+# The selected epoch may be earlier than the last epoch; test does not select the checkpoint.
 def main():
     parser = parser_for(__doc__, epochs=50, batch_size=32, lr=1e-3)
     parser.add_argument("--latent-dim", type=int, default=2)
@@ -442,6 +474,7 @@ def main():
         start = time.perf_counter()
         for number in range(1, args.epochs + 1):
             # KL warm-up gradually adds regularisation while the decoder learns to reconstruct.
+            # With defaults, beta is 0.1 in epoch 1 and reaches 1.0 at epoch 10.
             beta = args.beta * min(1, number / args.kl_warmup)
             train = epoch(model, loaders["train"], args, beta, optimizer, scaler)
             # A fixed beta and posterior-mean reconstruction make selection consistent.

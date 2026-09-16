@@ -46,6 +46,8 @@ from torch.utils.data import DataLoader, Subset
 
 
 # Part 3.2: basic residual block, implemented directly (no pre-built models).
+# RESIDUAL BUILDING BLOCK: learn a correction F(x) and add a shortcut before activation.
+# A projection matches dimensions when stride or channel count changes; addition needs equal shapes.
 class BasicBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         super().__init__()
@@ -71,6 +73,8 @@ class BasicBlock(nn.Module):
         return torch.relu(self.main(x) + self.shortcut(x))
 
 
+# CLASSIFIER: RGB image [B,3,32,32] -> spatial features -> global average -> [B,10] logits.
+# The 18-layer convention counts the stem, 16 block convolutions and final linear layer.
 class ResNet18(nn.Module):
     def __init__(self):
         super().__init__()
@@ -104,6 +108,7 @@ class ResNet18(nn.Module):
         return self.fc(self.pool(self.stages(self.stem(x))).flatten(1))
 
 
+# REPRODUCIBILITY: seed worker-side random libraries from the DataLoader worker seed.
 def seed_worker(_):
     # Give NumPy and Python random operations a seed in each DataLoader worker.
     seed = torch.initial_seed() % (2**32)
@@ -111,6 +116,8 @@ def seed_worker(_):
     random.seed(seed)
 
 
+# SPEED: retain compact raw pixels on GPU, then augment/normalise only the current batch.
+# This changes where preprocessing happens; it does not eliminate CPU setup or reporting work.
 class CachedCifarBatches:
     """Keep compact uint8 images on the GPU and transform whole batches.
 
@@ -179,6 +186,8 @@ class CachedCifarBatches:
             yield pixels.permute(0, 3, 1, 2), self.labels[indices]
 
 
+# SPLITS: keep validation for choosing weights and test for final reporting.
+# Training gets random augmentation; validation/test use a consistent preprocessing pipeline.
 def load_data(task, args):
     """Keep test data out of training, tuning, and checkpoint selection."""
     args.data_dir.mkdir(parents=True, exist_ok=True)
@@ -239,16 +248,20 @@ def load_data(task, args):
     return loaders, spec
 
 
+# MODEL FACTORY: construct the architecture required by this experiment before loading weights.
 def make_model(spec):
     return ResNet18()
 
 
+# TIMING: CPU code can continue while CUDA runs; wait before taking a meaningful timestamp.
 def sync(device):
     # CUDA launches work asynchronously. Wait for completion before reading timers.
     if device.type == "cuda":
         torch.cuda.synchronize(device)
 
 
+# EPOCH WORKFLOW: batch -> logits -> cross entropy -> backward/update if training -> metrics.
+# An epoch is one traversal of the loader. Evaluation disables gradients and does not update weights.
 def run_epoch(model, loader, device, amp, optimizer=None, scaler=None, collect=False):
     # One function handles both training and evaluation. BatchNorm updates its
     # running statistics in training mode and uses stored statistics in evaluation.
@@ -267,6 +280,7 @@ def run_epoch(model, loader, device, amp, optimizer=None, scaler=None, collect=F
         for images, labels in loader:
             images = images.to(device, non_blocking=True)
             if device.type == "cuda":
+                # Only memory layout changes: the logical tensor dimensions remain [B,C,H,W].
                 images = images.contiguous(memory_format=torch.channels_last)
             labels = labels.to(device, non_blocking=True)
             if training:
@@ -274,6 +288,7 @@ def run_epoch(model, loader, device, amp, optimizer=None, scaler=None, collect=F
                 optimizer.zero_grad(set_to_none=True)
             # Mixed precision uses lower precision for suitable operations to speed up CUDA.
             with torch.autocast(device_type=device.type, enabled=amp):
+                # One row per image, one score per class. Logits are not restricted to [0,1].
                 logits = model(images)
                 loss = criterion(logits, labels)
             if training:
@@ -300,9 +315,12 @@ def run_epoch(model, loader, device, amp, optimizer=None, scaler=None, collect=F
                 predictions=torch.cat(predictions) if collect else None)
 
 
+# REPORT METRICS: rows = true classes; columns = predicted classes.
+# Precision asks how reliable a prediction is; recall asks how many true examples were found.
 def evaluation_metrics(truth, predictions, classes):
     """Calculate the confusion matrix and report metrics on the input device."""
     count = len(classes)
+    # Encode each (true,predicted) pair as one integer, count occurrences, then restore a square table.
     matrix = torch.bincount(truth * count + predictions,
                             minlength=count * count).reshape(count, count)
     support = matrix.sum(1)
@@ -312,6 +330,7 @@ def evaluation_metrics(truth, predictions, classes):
     f1 = 2 * true_positive / (matrix.sum(0) + support).clamp_min(1)
     scores = torch.stack((precision, recall, f1), dim=1)
     total = support.sum()
+    # Macro gives each class equal weight; weighted below gives each true example equal weight.
     macro = scores.mean(0)
     weighted = (scores * support[:, None]).sum(0) / total.clamp_min(1)
     accuracy = true_positive.sum() / total.clamp_min(1)
@@ -328,6 +347,7 @@ def evaluation_metrics(truth, predictions, classes):
     return matrix.cpu().numpy(), "\n".join(lines) + "\n"
 
 
+# LEARNING CURVES: record epoch measurements to inspect progress and possible overfitting.
 def save_history(history, output):
     # Save measurements as a table and plot learning progress. Missing validation
     # values mean validation was skipped that epoch, not that accuracy was zero.
@@ -347,6 +367,8 @@ def save_history(history, output):
     plt.close(fig)
 
 
+# PRESENT RESULTS: produce per-class scores, confusion matrix and example predictions.
+# The example grid is illustrative; the reported accuracy uses the full evaluated split.
 def save_evaluation(model, loader, spec, args, result):
     classes = spec["classes"]
     # Precision, recall and F1 show performance per class; the confusion matrix
@@ -387,6 +409,8 @@ def save_evaluation(model, loader, spec, args, result):
     plt.close(fig)
 
 
+# DEMO ROUTE: read settings -> build data/model -> train/validate -> reload selected weights -> test.
+# Explain the validation selection rule and the timing boundaries before quoting accuracy and speed.
 def main():
     # Defaults allow the Run button to start training. Command-line flags can
     # change settings or select demo mode without editing this file.

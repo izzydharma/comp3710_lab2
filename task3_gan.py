@@ -47,6 +47,7 @@ MASK_VALUES = [0, 85, 170, 255]
 
 
 # Accept either the dataset folder itself or the common nested extraction layouts.
+# DATA LOCATION: accept the supplied extraction layouts; no images are loaded here.
 def find_data_folder(root):
     root = Path(root)
     for candidate in (root, root / "keras_png_slices_data",
@@ -58,6 +59,8 @@ def find_data_folder(root):
                             "Keep the extracted dataset beside this script or use --data-dir PATH.")
 
 
+# ONE SAMPLE: read a grayscale slice on demand. The DataLoader stacks samples into batches.
+# Images are floating-point intensities; segmentation masks are integer category IDs.
 class PngSlices(Dataset):
     """One preprocessed MRI PNG and its paired categorical mask per sample."""
     def __init__(self, rows, image_size, class_values=None, slices_per_volume=0):
@@ -109,6 +112,7 @@ class PngSlices(Dataset):
 
 
 # Command-line options override these defaults without editing the training code.
+# USER SETTINGS: define command-line defaults so the same file works from Run or a terminal.
 def parser_for(description, epochs, batch_size, lr, slices=0):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--mode", choices=("train", "evaluate"), default="train")
@@ -128,6 +132,8 @@ def parser_for(description, epochs, batch_size, lr, slices=0):
     return parser
 
 
+# RUN SETUP: validate settings, choose hardware/output paths and read checkpoint metadata.
+# This prepares an experiment; it does not perform a training epoch.
 def configure(parser, task):
     args = parser.parse_args()
     if args.epochs < 1 or args.batch_size < 1 or args.lr <= 0 or args.workers < 0 or args.slices_per_volume < 0:
@@ -179,6 +185,7 @@ def configure(parser, task):
 
 
 # Convert Path/device objects into JSON-compatible values and record the environment.
+# RECORD KEEPING: convert runtime settings to values that can be written to JSON.
 def configuration(args):
     config = {key: str(value) if isinstance(value, (Path, torch.device)) else value
               for key, value in vars(args).items()}
@@ -189,6 +196,8 @@ def configuration(args):
 
 # Use the supplied splits; training changes weights, validation selects a model,
 # and held-out test cases measure its final performance. The GAN uses no validation selection.
+# DATA WORKFLOW: discover files -> identify subjects -> reject split overlap -> form batches.
+# A subject is a person/case; a sample is one slice. Keep these units distinct in the demo.
 def make_loaders(args, segmentation=False, checkpoint=None):
     root = find_data_folder(args.data_dir)
     datasets, split = {}, {}
@@ -235,22 +244,27 @@ def make_loaders(args, segmentation=False, checkpoint=None):
 
 
 # GPU launches are asynchronous; synchronise before reading a wall-clock timer.
+# TIMING: CPU code can continue while CUDA runs; wait before taking a meaningful timestamp.
 def sync(device):
     if device.type == "cuda":
         torch.cuda.synchronize(device)
 
 
+# REPORT OUTPUT: write readable measurements/settings; this does not alter model weights.
 def save_json(path, data):
     Path(path).write_text(json.dumps(data, indent=2, allow_nan=False), encoding="utf-8")
 
 
 # Save weights plus the settings/splits needed for evaluation. Optimiser state is
 # not included, so these checkpoints are not complete training-resume snapshots.
+# CHECKPOINT OUTPUT: save learned weights and the metadata needed to interpret them.
+# A state_dict contains parameters and registered buffers, not the Python model class itself.
 def save_model(path, task, args, split, epoch, **payload):
     torch.save(dict(task=task, config=configuration(args), split=split, epoch=epoch, **payload), path)
 
 
 # CSV preserves exact epoch values; the PNG makes the learning trends easy to inspect.
+# LEARNING CURVES: record epoch measurements to inspect progress and possible overfitting.
 def save_history(output, history, columns):
     with (output / "history.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=history[0].keys())
@@ -268,6 +282,7 @@ def save_history(output, history, columns):
 
 
 # Detach removes autograd tracking; matplotlib needs CPU images in the display range.
+# VISUAL OUTPUT: arrange images for inspection; a small grid is not a complete test evaluation.
 def image_grid(images, path, columns=8, title=None):
     images = images.detach().float().cpu().clamp(0, 1)
     rows = math.ceil(len(images) / columns)
@@ -284,6 +299,7 @@ def image_grid(images, path, columns=8, title=None):
 
 
 # Fail clearly on NaN/infinite losses instead of silently saving invalid results.
+# ERROR CHECK: NaN/Inf signals an invalid numeric result; stop rather than report it as success.
 def require_finite(value):
     if not math.isfinite(value):
         raise RuntimeError("Non-finite loss. Check input data or try a lower learning rate / --no-amp.")
@@ -301,6 +317,9 @@ from torch import nn
 
 # WGAN-GP flow: noise -> Generator -> synthetic image -> Critic score.
 # G maximises the critic score; C learns a real-minus-fake gap with a gradient penalty.
+# GENERATOR: random noise [B,100,1,1] -> learned feature maps -> grayscale [B,1,128,128].
+# No real MRI is passed into G. The critic supplies the learning signal.
+# Transposed convolutions learn upsampling; they do not invert a particular original image.
 class Generator(nn.Module):
     def __init__(self, image_size=128, latent_dim=100):
         super().__init__()
@@ -325,6 +344,9 @@ class Generator(nn.Module):
 # A critic assigns an unrestricted score, not a real/fake probability.
 # No sigmoid, spectral normalisation, weight clipping or batch normalisation:
 # the per-image input-gradient penalty supplies the WGAN-GP regularisation.
+# CRITIC: image -> progressively smaller feature maps -> one unrestricted score per image.
+# Scores are relative, not probabilities: 3.2 is valid and does not mean 320 percent real.
+# No BatchNorm keeps each image score independent of other examples for the gradient penalty.
 class Critic(nn.Module):
     def __init__(self, image_size=128):
         super().__init__()
@@ -339,35 +361,53 @@ class Critic(nn.Module):
     def forward(self, images):
         return self.layers(images).flatten()
 
-
+# Convolution weights start as small random values drawn from a normal distribution.
+# Random initialisation breaks symmetry: different filters can learn different features.
+# START FROM SCRATCH: random convolution weights break symmetry between learned filters.
+# This function is applied to submodules only when no saved checkpoint is being loaded.
 def initialise(module):
     if isinstance(module, (nn.Conv2d, nn.ConvTranspose2d)):
         nn.init.normal_(module.weight, mean=0, std=0.02)
         if module.bias is not None:
             nn.init.zeros_(module.bias)
+    # BatchNorm’s learned scale starts near one and its offset starts at zero.
     elif isinstance(module, nn.BatchNorm2d):
         nn.init.normal_(module.weight, mean=1, std=0.02)
         nn.init.zeros_(module.bias)
 
-
+# Measure how sensitive the critic’s score is to changes in an interpolated image, 
+# then penalise gradient norms that differ from one.
+# WGAN-GP: encourage the critic input-gradient norm to be near one on interpolated images.
+# The gradient is with respect to pixels, then the penalty is differentiated into critic weights.
+# This is a soft sampled constraint, not gradient clipping or proof of a global Lipschitz bound.
 def gradient_penalty(critic, real, fake):
     # Interpolate independently for each example. Neither endpoint should
     # receive gradients: this penalty trains the critic, not the generator.
     with torch.autocast(device_type=real.device.type, enabled=False):
+        # Random alpha in [0,1] for each image, broadcast to all pixels/channels.
         alpha = torch.rand(len(real), 1, 1, 1, device=real.device)
+        # Interpolated images require gradients for the penalty; detach real/fake to avoid backprop into G.
         interpolated = (alpha * real.detach().float() +
                         (1 - alpha) * fake.detach().float()).requires_grad_(True)
+        # Each score depends on the mixed image; we measure its sensitivity to every input pixel next.
         scores = critic(interpolated)
+        # Compute the gradient of each score with respect to its interpolated image.
+        # The returned gradient has the same shape as interpolated: [B, C, H, W].
         gradients = torch.autograd.grad(
             outputs=scores, inputs=interpolated,
+            # Weight each output score by one. Retain the derivative graph so GP can train critic weights.
             grad_outputs=torch.ones_like(scores), create_graph=True,
         )[0]
         # Norm across all pixels/channels of EACH image, not across the batch.
         # create_graph=True allows the penalty to backpropagate into critic weights.
+        # Preserve B, combine C/H/W, then take one L2 norm per image. Norm 2 gives penalty (2-1)^2=1.
         norms = gradients.flatten(1).norm(2, dim=1)
         return (norms - 1).square().mean(), norms.detach().mean()
 
 
+# ALTERNATING TRAINING: five real batches update C, then one update changes G (by default).
+# C minimises mean(fake score)-mean(real score)+10*GP. G minimises -mean(fake score).
+# The two optimisers have separate parameters; each phase controls where gradients can flow.
 def train_epoch(generator, critic, loader, args, g_optimizer, c_optimizer, g_scaler):
     generator.train()
     critic.train()
@@ -375,25 +415,33 @@ def train_epoch(generator, critic, loader, args, g_optimizer, c_optimizer, g_sca
                   gradient_norm=0., real_score=0., fake_score=0.)
     count, g_count, g_total, g_updates = 0, 0, 0., 0
     for step, batch in enumerate(loader, 1):
+        # Scale real images from [0,1] to [-1,1] to match the generator’s Tanh output.
         real = batch["image"].to(args.device, non_blocking=True).float() * 2 - 1
         batch_size = len(real)
+        # Critic-only phase: freeze G, update C to increase real-minus-fake scores while penalising steep input gradients.
         for parameter in critic.parameters():
             parameter.requires_grad_(True)
         c_optimizer.zero_grad(set_to_none=True)
         # G is frozen for critic-only sampling, including its BatchNorm buffers.
         generator.eval()
+        # Generate fake images without tracking gradients for G.
         with torch.no_grad(), torch.autocast(device_type=args.device.type, enabled=args.amp):
             fake = generator(torch.randn(batch_size, args.latent_dim, 1, 1, device=args.device))
         generator.train()
         # Keep ALL critic calculations float32, including the second-order GP.
+
         with torch.autocast(device_type=args.device.type, enabled=False):
+            # Compute the mean score for real and fake images, then the gradient penalty.
             real_score = critic(real).mean()
             fake_score = critic(fake.float()).mean()
             gp, norm = gradient_penalty(critic, real, fake)
             gap = real_score - fake_score
+            # Minimising -gap increases real-minus-fake scores, while the penalty limits steep input gradients.
             c_loss = -gap + args.gp_weight * gp
         require_finite(c_loss.item())
+        # Calculates the critic parameter gradients.
         c_loss.backward()
+        # The critic’s parameters are updated to reduce the loss; G is frozen so its weights do not change.
         c_optimizer.step()
         values = dict(critic_loss=c_loss, wasserstein_gap=gap, gradient_penalty=gp,
                       gradient_norm=norm, real_score=real_score, fake_score=fake_score)
@@ -405,13 +453,16 @@ def train_epoch(generator, critic, loader, args, g_optimizer, c_optimizer, g_sca
         if step % args.n_critic == 0 or step == len(loader):
             for parameter in critic.parameters():
                 parameter.requires_grad_(False)
+            # Generator-only phase: freeze C, update G to increase the critic score of its generated images.
             g_optimizer.zero_grad(set_to_none=True)
             with torch.autocast(device_type=args.device.type, enabled=args.amp):
                 generated = generator(torch.randn(batch_size, args.latent_dim, 1, 1, device=args.device))
             # Do not use no_grad here: gradients must flow THROUGH C into G.
             with torch.autocast(device_type=args.device.type, enabled=False):
+                # A higher fake score makes this loss smaller. C stays fixed but its input gradient reaches G.
                 g_loss = -critic(generated.float()).mean()
             require_finite(g_loss.item())
+            # Calculates the generator parameter gradients by backpropagating through the critic.
             g_scaler.scale(g_loss).backward()
             g_scaler.step(g_optimizer)
             g_scaler.update()
@@ -432,10 +483,12 @@ def train_epoch(generator, critic, loader, args, g_optimizer, c_optimizer, g_sca
 @torch.inference_mode()
 def samples(generator, noise, args):
     generator.eval()
-    # Generate manageable chunks and convert [-1,1] back to [0,1] for saved images.
+    # Generate manageable chunk and convert [-1,1] back to [0,1] for saved images.
     return torch.cat([(generator(chunk) + 1) / 2 for chunk in noise.split(args.batch_size)])
 
 
+# INSPECTION: Generate images, fixed-noise samples + diversity measurements + a bounded nearest-image preview.
+# Pixel diversity may detect repetition, but artifacts can also increase it; inspect images too.
 @torch.inference_mode()
 def diagnostics(generator, loaders, args, fixed_noise):
     generated = samples(generator, fixed_noise, args)
@@ -446,11 +499,13 @@ def diagnostics(generator, loaders, args, fixed_noise):
     # full training-set nearest-neighbour audit or a validated realism metric.
     real_preview = []
     count = 0
+    # Collect up to 256 real training slices for a nearest-neighbour comparison.
     for batch in loaders["train"]:
         real_preview.append(batch["image"])
         count += len(batch["image"])
         if count >= 256:
             break
+    # Concatenate and move to the selected device for distance calculations.
     real_preview = torch.cat(real_preview)[:256].to(args.device)
     # Downsample before comparing pixels to keep the preview distance matrix small.
     small_fake = F.interpolate(generated, size=(32, 32), mode="area").flatten(1)
@@ -465,6 +520,7 @@ def diagnostics(generator, loaders, args, fixed_noise):
     # mode collapse, where different noise vectors produce nearly identical images.
     pairwise = torch.pdist(small_fake).square() / small_fake.size(1)
     report = dict(generated_samples=len(generated),
+                # The mean pixel standard deviation is a rough measure of diversity across generated images.
                   mean_pixel_standard_deviation=float(generated.std(dim=0).mean().item()),
                   mean_pairwise_mse_32x32=float(pairwise.mean().item()),
                   mean_nearest_training_preview_mse_32x32=float(nearest_error.mean().item()),
@@ -476,6 +532,8 @@ def diagnostics(generator, loaders, args, fixed_noise):
     return report
 
 
+# DEMO ROUTE: build G/C -> initialise or load -> alternate updates -> save samples/checkpoint.
+# There is no best-validation-realism selection: last.pt is the final saved training epoch.
 def main():
     parser = parser_for(__doc__, epochs=100, batch_size=32, lr=1e-4)
     parser.set_defaults(amp=False)
@@ -487,9 +545,11 @@ def main():
     if args.latent_dim < 1 or args.sample_every < 1:
         parser.error("latent-dim and sample-every must be positive.")
     loaders, split, _ = make_loaders(args, checkpoint=checkpoint)
+
+    # Build the generator and critic, then either initialise or load weights.
     generator = Generator(args.image_size, args.latent_dim).to(args.device)
     critic = Critic(args.image_size).to(args.device)
-    # A separate seeded generator fixes the preview noise without consuming training RNG draws.
+    # A separate seeded preview RNG avoids consuming random numbers used by training.
     fixed_rng = torch.Generator(device=args.device).manual_seed(args.seed + 1000)
     # Reusing the same 64 noise vectors makes visual changes across epochs comparable.
     fixed_noise = torch.randn(64, args.latent_dim, 1, 1, generator=fixed_rng, device=args.device)
@@ -502,6 +562,7 @@ def main():
         generator.apply(initialise)
         critic.apply(initialise)
         # Separate Adam optimisers track different parameters/momentum for the two networks.
+        # Adam betas control first/second moment averaging, not the critic-to-generator update ratio.
         g_optimizer = torch.optim.Adam(generator.parameters(), lr=args.lr, betas=(0.0, 0.9))
         c_optimizer = torch.optim.Adam(critic.parameters(), lr=args.lr, betas=(0.0, 0.9))
         g_scaler = torch.amp.GradScaler("cuda", enabled=args.amp)
@@ -509,6 +570,7 @@ def main():
         history = []
         sync(args.device)
         started = time.perf_counter()
+        # Alternate updates for the requested number of epochs. Each epoch uses every training batch once.
         for number in range(1, args.epochs+1):
             metrics = train_epoch(generator, critic, loaders["train"], args,
                                   g_optimizer, c_optimizer, g_scaler)

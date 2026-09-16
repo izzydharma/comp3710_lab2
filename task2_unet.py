@@ -43,6 +43,7 @@ MASK_VALUES = [0, 85, 170, 255]
 
 
 # Accept either the dataset folder itself or the common nested extraction layouts.
+# DATA LOCATION: accept the supplied extraction layouts; no images are loaded here.
 def find_data_folder(root):
     root = Path(root)
     for candidate in (root, root / "keras_png_slices_data",
@@ -54,6 +55,8 @@ def find_data_folder(root):
                             "Keep the extracted dataset beside this script or use --data-dir PATH.")
 
 
+# ONE SAMPLE: read a grayscale slice on demand. The DataLoader stacks samples into batches.
+# Images are floating-point intensities; segmentation masks are integer category IDs.
 class PngSlices(Dataset):
     """One preprocessed MRI PNG and its paired categorical mask per sample."""
     def __init__(self, rows, image_size, class_values=None, slices_per_volume=0):
@@ -107,6 +110,7 @@ class PngSlices(Dataset):
 
 
 # Command-line options override these defaults without editing the training code.
+# USER SETTINGS: define command-line defaults so the same file works from Run or a terminal.
 def parser_for(description, epochs, batch_size, lr, slices=0):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--mode", choices=("train", "evaluate"), default="train")
@@ -126,6 +130,8 @@ def parser_for(description, epochs, batch_size, lr, slices=0):
     return parser
 
 
+# RUN SETUP: validate settings, choose hardware/output paths and read checkpoint metadata.
+# This prepares an experiment; it does not perform a training epoch.
 def configure(parser, task):
     args = parser.parse_args()
     if args.epochs < 1 or args.batch_size < 1 or args.lr <= 0 or args.workers < 0 or args.slices_per_volume < 0:
@@ -173,6 +179,7 @@ def configure(parser, task):
 
 
 # Convert Path/device objects into JSON-compatible values and record the environment.
+# RECORD KEEPING: convert runtime settings to values that can be written to JSON.
 def configuration(args):
     config = {key: str(value) if isinstance(value, (Path, torch.device)) else value
               for key, value in vars(args).items()}
@@ -183,6 +190,8 @@ def configuration(args):
 
 # Use the supplied splits; training changes weights, validation selects a model,
 # and held-out test cases measure its final performance. The GAN uses no validation selection.
+# DATA WORKFLOW: discover files -> identify subjects -> reject split overlap -> form batches.
+# A subject is a person/case; a sample is one slice. Keep these units distinct in the demo.
 def make_loaders(args, segmentation=False, checkpoint=None):
     root = find_data_folder(args.data_dir)
     datasets, split = {}, {}
@@ -229,22 +238,27 @@ def make_loaders(args, segmentation=False, checkpoint=None):
 
 
 # GPU launches are asynchronous; synchronise before reading a wall-clock timer.
+# TIMING: CPU code can continue while CUDA runs; wait before taking a meaningful timestamp.
 def sync(device):
     if device.type == "cuda":
         torch.cuda.synchronize(device)
 
 
+# REPORT OUTPUT: write readable measurements/settings; this does not alter model weights.
 def save_json(path, data):
     Path(path).write_text(json.dumps(data, indent=2, allow_nan=False), encoding="utf-8")
 
 
 # Save weights plus the settings/splits needed for evaluation. Optimiser state is
 # not included, so these checkpoints are not complete training-resume snapshots.
+# CHECKPOINT OUTPUT: save learned weights and the metadata needed to interpret them.
+# A state_dict contains parameters and registered buffers, not the Python model class itself.
 def save_model(path, task, args, split, epoch, **payload):
     torch.save(dict(task=task, config=configuration(args), split=split, epoch=epoch, **payload), path)
 
 
 # CSV preserves exact epoch values; the PNG makes the learning trends easy to inspect.
+# LEARNING CURVES: record epoch measurements to inspect progress and possible overfitting.
 def save_history(output, history, columns):
     with (output / "history.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=history[0].keys())
@@ -262,6 +276,7 @@ def save_history(output, history, columns):
 
 
 # Detach removes autograd tracking; matplotlib needs CPU images in the display range.
+# VISUAL OUTPUT: arrange images for inspection; a small grid is not a complete test evaluation.
 def image_grid(images, path, columns=8, title=None):
     images = images.detach().float().cpu().clamp(0, 1)
     rows = math.ceil(len(images) / columns)
@@ -278,6 +293,7 @@ def image_grid(images, path, columns=8, title=None):
 
 
 # Fail clearly on NaN/infinite losses instead of silently saving invalid results.
+# ERROR CHECK: NaN/Inf signals an invalid numeric result; stop rather than report it as success.
 def require_finite(value):
     if not math.isfinite(value):
         raise RuntimeError("Non-finite loss. Check input data or try a lower learning rate / --no-amp.")
@@ -295,6 +311,8 @@ from torch import nn
 
 # Two 3x3 convolutions extract features while padding preserves H and W.
 # GroupNorm normalises within each sample, avoiding dependence on batch statistics.
+# LOCAL FEATURES: two 3x3 convolutions build features while padding preserves height/width.
+# GroupNorm uses groups within each sample, so it works with the small training batch.
 def double_conv(in_channels, out_channels):
     return nn.Sequential(
         nn.Conv2d(in_channels, out_channels, 3, padding=1, bias=False),
@@ -307,6 +325,9 @@ def double_conv(in_channels, out_channels):
 
 
 # U-Net predicts a category for every pixel: [B, 1, H, W] -> [B, classes, H, W].
+# U-NET ARCHITECTURE: encoder shrinks maps; decoder restores resolution with encoder skips.
+# Input [B,1,H,W] -> logits [B,4,H,W]. This predicts a category at every pixel.
+# Skips concatenate features along channels; unlike ResNet shortcuts, they do not add them.
 class UNet(nn.Module):
     def __init__(self, classes, base_channels=32):
         super().__init__()
@@ -350,8 +371,11 @@ class UNet(nn.Module):
         return self.output(hidden)  # One logit channel per segmentation category.
 
 
+# OBJECTIVE: cross entropy rewards the correct pixel class; soft Dice rewards region overlap.
+# Soft probabilities keep Dice differentiable. Hard argmax masks are used later for reporting.
 def segmentation_loss(logits, labels):
     # Integer masks [B,H,W] become one-hot targets [B,C,H,W] for C categories.
+    # Example: class ID 2 becomes [0,0,1,0]. permute moves classes to the channel axis.
     one_hot = F.one_hot(labels, num_classes=logits.size(1)).permute(0, 3, 1, 2).float()
     # Compute loss reductions in float32 even when model inference uses AMP.
     logits = logits.float()
@@ -360,11 +384,13 @@ def segmentation_loss(logits, labels):
     probabilities = logits.softmax(dim=1)
     # Sum over batch and spatial axes, leaving one soft Dice score per class.
     axes = (0, 2, 3)
+    # Only probability assigned to the true class contributes to that class intersection.
     intersection = (probabilities * one_hot).sum(axes)
     denominator = probabilities.sum(axes) + one_hot.sum(axes)
     # Soft Dice uses probabilities so it remains differentiable; epsilon avoids 0/0.
     # Cross entropy rewards correct pixel classes; Dice rewards region overlap.
     # This loss averages all classes, including background.
+    # The small epsilon prevents division by zero; this score is computed for each class.
     soft_dice = (2 * intersection + 1e-6) / (denominator + 1e-6)
     # Categorical one-hot target, not binary/regression segmentation.
     # PyTorch accepts floating one-hot targets here. Both terms have weight 1.
@@ -372,6 +398,8 @@ def segmentation_loss(logits, labels):
     return F.cross_entropy(logits, one_hot) + (1 - soft_dice.mean())
 
 
+# METRIC: Dice = 2TP/(2TP+FP+FN). Perfect overlap gives 1; missed/extra pixels lower it.
+# If a class is absent in both masks there is no evidence to score, so return NaN.
 def dice_scores(confusion):
     confusion = np.asarray(confusion, dtype=np.float64)
     # Rows are true classes, columns predicted classes. The diagonal counts true positives.
@@ -383,6 +411,8 @@ def dice_scores(confusion):
                      out=np.full(len(truth), np.nan), where=denominator > 0)
 
 
+# EPOCH WORKFLOW: paired MRI/mask -> intensity augmentation if training -> logits -> loss/update.
+# Then count true/predicted pixel pairs for global and, during evaluation, per-subject metrics.
 def epoch(model, loader, args, classes, optimizer=None, scaler=None):
     # The same loop trains when an optimiser is supplied, otherwise only evaluates.
     training = optimizer is not None
@@ -410,6 +440,7 @@ def epoch(model, loader, args, classes, optimizer=None, scaler=None):
                 scaler.step(optimizer)
                 scaler.update()
             # Hard argmax labels are for reporting only; the loss used probabilities/logits.
+            # Choose the largest of four channel scores at every pixel: [B,4,H,W] -> [B,H,W].
             predicted = logits.detach().argmax(1)
             # Report a sample-weighted average of batch losses. The soft Dice component
             # is computed per batch, so this is not a global pooled-Dice loss.
@@ -431,6 +462,8 @@ def epoch(model, loader, args, classes, optimizer=None, scaler=None):
     return dict(loss=total_loss/count, confusion=matrix, subjects=subjects)
 
 
+# TWO AGGREGATIONS: pooled Dice combines pixels; mean-subject Dice averages case scores.
+# These answer different questions and need not match, even for the same predictions.
 def report_dice(result, class_values):
     # Pooled Dice combines all pixels. Mean subject Dice gives each evaluable case
     # equal weight, so it can differ from the score dominated by larger regions/cases.
@@ -457,6 +490,8 @@ def report_dice(result, class_values):
                            "Pooled and mean-per-subject scores both reported, including background.")
 
 
+# DISPLAY: compare MRI, ground truth and argmax prediction at the same slice location.
+# Matching colours represent matching classes, not matching grayscale intensity values.
 @torch.inference_mode()
 def visualise(model, loader, args, class_values):
     model.eval()
@@ -505,6 +540,8 @@ def visualise(model, loader, args, class_values):
                         slice_indices=batch["slice_index"][:len(images)].numpy())
 
 
+# DEMO ROUTE: pair data -> train U-Net -> select validation foreground Dice -> test selected weights.
+# Background is excluded from selection but included in the training loss and final label report.
 def main():
     parser = parser_for(__doc__, epochs=100, batch_size=8, lr=1e-3, slices=0)
     parser.set_defaults(image_size=256)  # Native resolution of the supplied PNG slices.
