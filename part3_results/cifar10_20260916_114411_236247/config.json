@@ -1,0 +1,22 @@
+{
+  "task": "cifar10",
+  "checkpoint": null,
+  "data_dir": "/home/Student/s4994398/Lab_2/data",
+  "output": "/home/Student/s4994398/Lab_2/part3_results/cifar10_20260916_114411_236247",
+  "epochs": null,
+  "batch_size": 512,
+  "val_every": 5,
+  "lr": null,
+  "seed": 42,
+  "workers": 0,
+  "device": "cuda",
+  "amp": true,
+  "download": true,
+  "gpu_data": true,
+  "python": "3.11.16",
+  "torch": "2.14.0+cu130",
+  "fused_sgd": true,
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "gpu_data_enabled": true,
+  "gpu_data_setup_seconds": 0.20135042117908597
+}
