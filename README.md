@@ -50,16 +50,18 @@ python task3_gan.py --device cuda
 
 Use `--device cpu` when needed; full training can be slow. Part 3.2 explicitly defaults to CUDA, while the MRI tasks automatically select a device by default. Inspect options with `python task2_unet.py --help` (similarly for the other scripts). `--output` must name a new/empty directory.
 
-To evaluate saved MRI weights, replace the placeholder with a real checkpoint:
+To evaluate your saved MRI weights, run these commands from this repository:
 
 ```bash
-python task1_vae.py --mode evaluate --checkpoint PATH_TO_VAE_BEST_PT
-python task2_unet.py --mode evaluate --checkpoint PATH_TO_UNET_BEST_PT
-python task3_gan.py --mode evaluate --checkpoint PATH_TO_WGAN_LAST_PT
+python task1_vae.py --mode evaluate --checkpoint part4_results/vae_train_20260915_004541_802297/best.pt
+python task2_unet.py --mode evaluate --checkpoint part4_results/unet_train_20260915_005104_064230/best.pt
+python task3_gan.py --mode evaluate --checkpoint part4_results/gan_wgan_gp_train_20260916_122956_496407/last.pt
 python part3.py demo --checkpoint PATH_TO_RESNET_BEST_PT --device cuda
 ```
 
 The ResNet `demo` command evaluates and demonstrates an additional training epoch; it is not just a static prediction command. GAN evaluation generates samples and diagnostics. Its current WGAN-GP code requires a compatible WGAN-GP checkpoint, not an old BCE-GAN checkpoint. Checkpoints are model/configuration records, not complete optimiser-state training resumes.
+
+For the assessed **MRI segmentation inference demo**, run the `task2_unet.py` evaluation command above live. It loads your trained U-Net and predicts pixel classes for held-out MRI slices from the dataset. Open `segmentations.png` in the new results directory printed by the command: each row shows the input MRI, its ground-truth mask and the model's predicted segmentation, with the case and slice identified. Explain that the MRI is the model input; the ground-truth mask is used only for comparison and scoring. `dice_results.json` contains the test Dice scores and `segmentation_examples.npz` contains predicted masks and probabilities. Each run creates a fresh output directory. VAE reconstruction and GAN generation are separate tasks; use the U-Net output to demonstrate segmentation.
 
 ## Rangpur
 
@@ -76,8 +78,7 @@ squeue --me
 `sbatch` runs on the cluster, not Windows Command Prompt. The supplied job files assume the `comp3710` account/partition and a conda environment called `torch`. Check those settings against your allocation. Jobs request a GPU and execute on an allocated node; a pending job has not started training. The scripts use the partition memory default because of the reported Rangpur memory configuration. Inspect each job's `.out` and `.err` logs for errors.
 
 ## Results and validation
-
-See [Results with evidence](docs/RESULTS.md) for the selected run folders, metrics, figures and limitations. Raw outputs remain available under `part3_results/` and `part4_results/`; older runs are historical comparisons, not current scores.
+for the selected run folders, metrics, figures and limitations. Raw outputs remain available under `part3_results/` and `part4_results/`; older runs are historical comparisons, not current scores.
 
 Run the small CPU checks without downloading datasets:
 
@@ -89,6 +90,4 @@ These checks cover model shapes, finite training gradients, known Dice behaviour
 
 ## Sources, AI assistance and assessment
 
-See [Sources and AI assistance](docs/SOURCES.md). ChatGPT/Codex assisted with implementation, debugging, comments and explanations. The account owner must understand and demonstrate the submitted code, check results, and acknowledge assistance. Documentation and tests do not guarantee marks; the demonstrator assesses correctness, results and understanding.
-
-Commit completed changes with messages describing their purpose, for example `docs: explain MRI preprocessing and checkpoint evaluation`. Keep genuine history: do not invent past development steps or rewrite dates to simulate progress. Review `git diff` and stage intended files rather than datasets or checkpoints. This repository does not grant redistribution rights to the course dataset or assignment documents.
+ChatGPT/Codex assisted with implementation, debugging, comments and explanations. The account owner must understand and demonstrate the submitted code, check results, and acknowledge assistance. Documentation and tests do not guarantee marks; the demonstrator assesses correctness, results and understanding.

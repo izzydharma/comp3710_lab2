@@ -62,6 +62,7 @@ class BasicBlock(nn.Module):
         # A projection aligns dimensions when spatial size/channels change.
         self.shortcut = nn.Identity()
         if stride != 1 or in_channels != out_channels:
+            # Use a 1x1 convolution to match the number of channels and the spatial size.
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_channels, out_channels, 1, stride, bias=False),
                 nn.BatchNorm2d(out_channels),
@@ -80,7 +81,9 @@ class ResNet18(nn.Module):
         super().__init__()
         # CIFAR-10 has 32x32 images: use a 3x3 stride-1 stem without max pooling.
         self.stem = nn.Sequential(
+            # The first convolution produces 64 channels, matching the first residual stage.
             nn.Conv2d(3, 64, 3, 1, 1, bias=False),
+            # BatchNorm2d and ReLU are applied after each convolution in the stem and blocks.
             nn.BatchNorm2d(64), nn.ReLU(),
         )
         stages = []
@@ -90,7 +93,10 @@ class ResNet18(nn.Module):
         # Stage outputs have spatial sizes 32x32, 16x16, 8x8 and 4x4.
         for index, channels in enumerate((64, 128, 256, 512)):
             stages.extend([
+                # The first block in each stage may downsample the spatial size by using stride=2.
                 BasicBlock(in_channels, channels, stride=1 if index == 0 else 2),
+                # The second block in each stage keeps the same spatial size and channel count.
+                # allowing the residual connection to be a simple identity mapping.
                 BasicBlock(channels, channels),
             ])
             in_channels = channels

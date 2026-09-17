@@ -1,0 +1,18 @@
+{
+  "mode": "evaluate",
+  "data_dir": "D:\\Lab_2\\keras_png_slices_data\\keras_png_slices_data",
+  "checkpoint": "part4_results\\unet_train_20260915_005104_064230\\best.pt",
+  "output": "D:\\Lab_2\\part4_results\\unet_evaluate_20260917_135713_617500",
+  "epochs": 100,
+  "batch_size": 8,
+  "lr": 0.001,
+  "image_size": 256,
+  "slices_per_volume": 0,
+  "seed": 42,
+  "device": "cuda",
+  "workers": 0,
+  "amp": true,
+  "base_channels": 32,
+  "torch_version": "2.9.0+cu128",
+  "gpu": "NVIDIA GeForce RTX 5070 Laptop GPU"
+}

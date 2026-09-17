@@ -1,0 +1,8 @@
+{
+  "generated_samples": 64,
+  "mean_pixel_standard_deviation": 0.054908815771341324,
+  "mean_pairwise_mse_32x32": 0.00822623260319233,
+  "mean_nearest_training_preview_mse_32x32": 0.0029141444247215986,
+  "reference_training_slices": 256,
+  "note": "Small diversity or repeated images may indicate mode collapse. These numbers do not establish realism, novelty or absence of memorisation."
+}

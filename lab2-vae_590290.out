@@ -1,0 +1,82 @@
+Job 590290 on a100-9, started Tue Sep 15 00:45:35 AEST 2026
+Tue Sep 15 00:45:35 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-PCIE-40GB          Off |   00000000:0B:00.0 Off |                    0 |
+| N/A   36C    P0             35W /  250W |       0MiB /  40960MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+PyTorch: 2.14.0+cu130
+Built for CUDA: 13.0
+GPU: NVIDIA A100-PCIE-40GB
+Task: vae; device: cuda; mixed precision: True
+GPU: NVIDIA A100-PCIE-40GB
+train: 302 cases, 9664 slices
+val: 35 cases, 1120 slices
+test: 17 cases, 544 slices
+Epoch 1/50: train=1.27852, val=0.00643, MSE=0.01207, KL=207495.539
+Epoch 2/50: train=0.00564, val=0.00573, MSE=0.00556, KL=6.508
+Epoch 3/50: train=0.00532, val=0.00561, MSE=0.00521, KL=5.945
+Epoch 4/50: train=0.00524, val=0.00562, MSE=0.00510, KL=5.548
+Epoch 5/50: train=0.00520, val=0.00557, MSE=0.00504, KL=5.203
+Epoch 6/50: train=0.00518, val=0.00549, MSE=0.00500, KL=4.933
+Epoch 7/50: train=0.00517, val=0.00538, MSE=0.00497, KL=4.745
+Epoch 8/50: train=0.00517, val=0.00542, MSE=0.00495, KL=4.597
+Epoch 9/50: train=0.00517, val=0.00538, MSE=0.00493, KL=4.473
+Epoch 10/50: train=0.00517, val=0.00541, MSE=0.00491, KL=4.345
+Epoch 11/50: train=0.00516, val=0.00554, MSE=0.00489, KL=4.368
+Epoch 12/50: train=0.00513, val=0.00541, MSE=0.00486, KL=4.393
+Epoch 13/50: train=0.00511, val=0.00540, MSE=0.00484, KL=4.426
+Epoch 14/50: train=0.00509, val=0.00534, MSE=0.00482, KL=4.444
+Epoch 15/50: train=0.00506, val=0.00547, MSE=0.00478, KL=4.477
+Epoch 16/50: train=0.00505, val=0.00539, MSE=0.00477, KL=4.519
+Epoch 17/50: train=0.00502, val=0.00533, MSE=0.00475, KL=4.541
+Epoch 18/50: train=0.00501, val=0.00544, MSE=0.00472, KL=4.589
+Epoch 19/50: train=0.00499, val=0.00538, MSE=0.00471, KL=4.636
+Epoch 20/50: train=0.00497, val=0.00537, MSE=0.00469, KL=4.688
+Epoch 21/50: train=0.00495, val=0.00537, MSE=0.00466, KL=4.710
+Epoch 22/50: train=0.00493, val=0.00541, MSE=0.00464, KL=4.736
+Epoch 23/50: train=0.00491, val=0.00536, MSE=0.00462, KL=4.765
+Epoch 24/50: train=0.00488, val=0.00541, MSE=0.00459, KL=4.806
+Epoch 25/50: train=0.00487, val=0.00544, MSE=0.00457, KL=4.862
+Epoch 26/50: train=0.00485, val=0.00544, MSE=0.00456, KL=4.854
+Epoch 27/50: train=0.00482, val=0.00551, MSE=0.00452, KL=4.905
+Epoch 28/50: train=0.00482, val=0.00543, MSE=0.00452, KL=4.933
+Epoch 29/50: train=0.00480, val=0.00540, MSE=0.00449, KL=5.011
+Epoch 30/50: train=0.00477, val=0.00550, MSE=0.00446, KL=5.061
+Epoch 31/50: train=0.00476, val=0.00541, MSE=0.00446, KL=5.047
+Epoch 32/50: train=0.00475, val=0.00554, MSE=0.00444, KL=5.098
+Epoch 33/50: train=0.00473, val=0.00547, MSE=0.00442, KL=5.098
+Epoch 34/50: train=0.00472, val=0.00549, MSE=0.00440, KL=5.153
+Epoch 35/50: train=0.00471, val=0.00552, MSE=0.00439, KL=5.169
+Epoch 36/50: train=0.00469, val=0.00556, MSE=0.00438, KL=5.163
+Epoch 37/50: train=0.00469, val=0.00561, MSE=0.00437, KL=5.213
+Epoch 38/50: train=0.00467, val=0.00565, MSE=0.00435, KL=5.222
+Epoch 39/50: train=0.00466, val=0.00559, MSE=0.00434, KL=5.241
+Epoch 40/50: train=0.00465, val=0.00557, MSE=0.00433, KL=5.242
+Epoch 41/50: train=0.00464, val=0.00559, MSE=0.00432, KL=5.264
+Epoch 42/50: train=0.00464, val=0.00552, MSE=0.00432, KL=5.308
+Epoch 43/50: train=0.00462, val=0.00559, MSE=0.00430, KL=5.295
+Epoch 44/50: train=0.00462, val=0.00563, MSE=0.00429, KL=5.322
+Epoch 45/50: train=0.00461, val=0.00577, MSE=0.00429, KL=5.332
+Epoch 46/50: train=0.00460, val=0.00556, MSE=0.00428, KL=5.367
+Epoch 47/50: train=0.00460, val=0.00563, MSE=0.00427, KL=5.384
+Epoch 48/50: train=0.00460, val=0.00563, MSE=0.00427, KL=5.384
+Epoch 49/50: train=0.00458, val=0.00562, MSE=0.00425, KL=5.412
+Epoch 50/50: train=0.00457, val=0.00568, MSE=0.00424, KL=5.431
+Test results: {'loss': 0.0053572217002511024, 'mse': 0.005079447839628248, 'kl': 4.551047086715698, 'selected_epoch': 17, 'training_seconds': 305.83873638883233, 'evaluation': 'Held-out subjects; posterior-mean reconstruction, not a sampled ELBO estimate.', 'image_size': 128, 'slices_per_volume': 0}
+Results: /home/Student/s4994398/Lab_2/part4_results/vae_train_20260915_004541_802297
+Finished Tue Sep 15 00:50:57 AEST 2026

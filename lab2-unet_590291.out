@@ -1,0 +1,137 @@
+Job 590291 on a100-9, started Tue Sep 15 00:50:58 AEST 2026
+Tue Sep 15 00:50:58 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-PCIE-40GB          Off |   00000000:0B:00.0 Off |                    0 |
+| N/A   27C    P0             33W /  250W |       0MiB /  40960MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+PyTorch: 2.14.0+cu130
+Built for CUDA: 13.0
+GPU: NVIDIA A100-PCIE-40GB
+Task: unet; device: cuda; mixed precision: True
+GPU: NVIDIA A100-PCIE-40GB
+train: 302 cases, 9664 slices
+val: 35 cases, 1120 slices
+test: 17 cases, 544 slices
+Channel to raw label mapping: {0: 0, 1: 85, 2: 170, 3: 255}
+Epoch 1/100: train=0.1874, val=0.0971, val foreground DSC=0.9446
+Epoch 2/100: train=0.0833, val=0.0697, val foreground DSC=0.9601
+Epoch 3/100: train=0.0685, val=0.0625, val foreground DSC=0.9633
+Epoch 4/100: train=0.0642, val=0.0647, val foreground DSC=0.9630
+Epoch 5/100: train=0.0598, val=0.0635, val foreground DSC=0.9628
+Epoch 6/100: train=0.0570, val=0.0570, val foreground DSC=0.9665
+Epoch 7/100: train=0.0545, val=0.0602, val foreground DSC=0.9646
+Epoch 8/100: train=0.0498, val=0.0553, val foreground DSC=0.9673
+Epoch 9/100: train=0.0470, val=0.0572, val foreground DSC=0.9666
+Epoch 10/100: train=0.0440, val=0.0545, val foreground DSC=0.9679
+Epoch 11/100: train=0.0416, val=0.0555, val foreground DSC=0.9676
+Epoch 12/100: train=0.0396, val=0.0566, val foreground DSC=0.9674
+Epoch 13/100: train=0.0382, val=0.0596, val foreground DSC=0.9661
+Epoch 14/100: train=0.0370, val=0.0548, val foreground DSC=0.9688
+Epoch 15/100: train=0.0361, val=0.0551, val foreground DSC=0.9686
+Epoch 16/100: train=0.0347, val=0.0553, val foreground DSC=0.9687
+Epoch 17/100: train=0.0343, val=0.0546, val foreground DSC=0.9691
+Epoch 18/100: train=0.0334, val=0.0547, val foreground DSC=0.9691
+Epoch 19/100: train=0.0325, val=0.0560, val foreground DSC=0.9688
+Epoch 20/100: train=0.0320, val=0.0574, val foreground DSC=0.9687
+Epoch 21/100: train=0.0314, val=0.0582, val foreground DSC=0.9686
+Epoch 22/100: train=0.0306, val=0.0570, val foreground DSC=0.9692
+Epoch 23/100: train=0.0302, val=0.0558, val foreground DSC=0.9696
+Epoch 24/100: train=0.0295, val=0.0567, val foreground DSC=0.9695
+Epoch 25/100: train=0.0292, val=0.0560, val foreground DSC=0.9698
+Epoch 26/100: train=0.0286, val=0.0563, val foreground DSC=0.9699
+Epoch 27/100: train=0.0280, val=0.0577, val foreground DSC=0.9694
+Epoch 28/100: train=0.0277, val=0.0589, val foreground DSC=0.9692
+Epoch 29/100: train=0.0272, val=0.0576, val foreground DSC=0.9698
+Epoch 30/100: train=0.0270, val=0.0580, val foreground DSC=0.9695
+Epoch 31/100: train=0.0268, val=0.0593, val foreground DSC=0.9692
+Epoch 32/100: train=0.0262, val=0.0587, val foreground DSC=0.9697
+Epoch 33/100: train=0.0258, val=0.0608, val foreground DSC=0.9691
+Epoch 34/100: train=0.0256, val=0.0595, val foreground DSC=0.9692
+Epoch 35/100: train=0.0252, val=0.0590, val foreground DSC=0.9698
+Epoch 36/100: train=0.0250, val=0.0590, val foreground DSC=0.9701
+Epoch 37/100: train=0.0247, val=0.0602, val foreground DSC=0.9695
+Epoch 38/100: train=0.0243, val=0.0598, val foreground DSC=0.9698
+Epoch 39/100: train=0.0241, val=0.0601, val foreground DSC=0.9699
+Epoch 40/100: train=0.0238, val=0.0607, val foreground DSC=0.9697
+Epoch 41/100: train=0.0235, val=0.0599, val foreground DSC=0.9698
+Epoch 42/100: train=0.0234, val=0.0630, val foreground DSC=0.9693
+Epoch 43/100: train=0.0229, val=0.0617, val foreground DSC=0.9695
+Epoch 44/100: train=0.0228, val=0.0619, val foreground DSC=0.9696
+Epoch 45/100: train=0.0226, val=0.0621, val foreground DSC=0.9696
+Epoch 46/100: train=0.0224, val=0.0624, val foreground DSC=0.9692
+Epoch 47/100: train=0.0220, val=0.0636, val foreground DSC=0.9695
+Epoch 48/100: train=0.0222, val=0.0620, val foreground DSC=0.9698
+Epoch 49/100: train=0.0214, val=0.0631, val foreground DSC=0.9695
+Epoch 50/100: train=0.0214, val=0.0631, val foreground DSC=0.9697
+Epoch 51/100: train=0.0211, val=0.0629, val foreground DSC=0.9696
+Epoch 52/100: train=0.0209, val=0.0646, val foreground DSC=0.9694
+Epoch 53/100: train=0.0207, val=0.0644, val foreground DSC=0.9697
+Epoch 54/100: train=0.0206, val=0.0629, val foreground DSC=0.9698
+Epoch 55/100: train=0.0204, val=0.0658, val foreground DSC=0.9691
+Epoch 56/100: train=0.0199, val=0.0648, val foreground DSC=0.9694
+Epoch 57/100: train=0.0199, val=0.0658, val foreground DSC=0.9694
+Epoch 58/100: train=0.0196, val=0.0659, val foreground DSC=0.9693
+Epoch 59/100: train=0.0196, val=0.0650, val foreground DSC=0.9695
+Epoch 60/100: train=0.0192, val=0.0676, val foreground DSC=0.9690
+Epoch 61/100: train=0.0191, val=0.0667, val foreground DSC=0.9693
+Epoch 62/100: train=0.0188, val=0.0664, val foreground DSC=0.9693
+Epoch 63/100: train=0.0187, val=0.0669, val foreground DSC=0.9694
+Epoch 64/100: train=0.0184, val=0.0671, val foreground DSC=0.9691
+Epoch 65/100: train=0.0182, val=0.0675, val foreground DSC=0.9694
+Epoch 66/100: train=0.0183, val=0.0678, val foreground DSC=0.9691
+Epoch 67/100: train=0.0180, val=0.0682, val foreground DSC=0.9690
+Epoch 68/100: train=0.0176, val=0.0697, val foreground DSC=0.9690
+Epoch 69/100: train=0.0175, val=0.0686, val foreground DSC=0.9693
+Epoch 70/100: train=0.0174, val=0.0690, val foreground DSC=0.9692
+Epoch 71/100: train=0.0171, val=0.0699, val foreground DSC=0.9691
+Epoch 72/100: train=0.0172, val=0.0705, val foreground DSC=0.9690
+Epoch 73/100: train=0.0170, val=0.0697, val foreground DSC=0.9690
+Epoch 74/100: train=0.0167, val=0.0705, val foreground DSC=0.9688
+Epoch 75/100: train=0.0164, val=0.0717, val foreground DSC=0.9688
+Epoch 76/100: train=0.0163, val=0.0718, val foreground DSC=0.9689
+Epoch 77/100: train=0.0162, val=0.0722, val foreground DSC=0.9687
+Epoch 78/100: train=0.0160, val=0.0726, val foreground DSC=0.9686
+Epoch 79/100: train=0.0159, val=0.0718, val foreground DSC=0.9687
+Epoch 80/100: train=0.0156, val=0.0714, val foreground DSC=0.9690
+Epoch 81/100: train=0.0154, val=0.0738, val foreground DSC=0.9687
+Epoch 82/100: train=0.0153, val=0.0739, val foreground DSC=0.9686
+Epoch 83/100: train=0.0158, val=0.0745, val foreground DSC=0.9683
+Epoch 84/100: train=0.0149, val=0.0735, val foreground DSC=0.9686
+Epoch 85/100: train=0.0149, val=0.0756, val foreground DSC=0.9685
+Epoch 86/100: train=0.0148, val=0.0753, val foreground DSC=0.9685
+Epoch 87/100: train=0.0145, val=0.0758, val foreground DSC=0.9684
+Epoch 88/100: train=0.0145, val=0.0740, val foreground DSC=0.9687
+Epoch 89/100: train=0.0143, val=0.0767, val foreground DSC=0.9682
+Epoch 90/100: train=0.0143, val=0.0763, val foreground DSC=0.9684
+Epoch 91/100: train=0.0141, val=0.0764, val foreground DSC=0.9685
+Epoch 92/100: train=0.0138, val=0.0764, val foreground DSC=0.9686
+Epoch 93/100: train=0.0137, val=0.0767, val foreground DSC=0.9684
+Epoch 94/100: train=0.0137, val=0.0783, val foreground DSC=0.9682
+Epoch 95/100: train=0.0134, val=0.0786, val foreground DSC=0.9683
+Epoch 96/100: train=0.0133, val=0.0786, val foreground DSC=0.9682
+Epoch 97/100: train=0.0132, val=0.0790, val foreground DSC=0.9682
+Epoch 98/100: train=0.0132, val=0.0790, val foreground DSC=0.9683
+Epoch 99/100: train=0.0129, val=0.0784, val foreground DSC=0.9683
+Epoch 100/100: train=0.0129, val=0.0785, val foreground DSC=0.9682
+Raw label 0: pooled DSC=0.9995213998400577, mean subject DSC=0.9995213887220546
+Raw label 85: pooled DSC=0.9675357591625434, mean subject DSC=0.9614246868315606
+Raw label 170: pooled DSC=0.9649891513080779, mean subject DSC=0.9644367735657651
+Raw label 255: pooled DSC=0.9785667895758157, mean subject DSC=0.9783672619842791
+All labels above 0.9: True
+Results: /home/Student/s4994398/Lab_2/part4_results/unet_train_20260915_005104_064230
+Finished Tue Sep 15 01:50:53 AEST 2026

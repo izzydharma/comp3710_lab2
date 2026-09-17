@@ -1,0 +1,132 @@
+Job 590292 on a100-9, started Tue Sep 15 01:50:54 AEST 2026
+Tue Sep 15 01:50:54 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-PCIE-40GB          Off |   00000000:0B:00.0 Off |                    0 |
+| N/A   41C    P0             36W /  250W |       0MiB /  40960MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+PyTorch: 2.14.0+cu130
+Built for CUDA: 13.0
+GPU: NVIDIA A100-PCIE-40GB
+Task: gan; device: cuda; mixed precision: True
+GPU: NVIDIA A100-PCIE-40GB
+train: 302 cases, 9664 slices
+val: 35 cases, 1120 slices
+test: 17 cases, 544 slices
+Epoch 1/100: G=0.8383, D=0.6446
+Epoch 2/100: G=0.8454, D=0.6816
+Epoch 3/100: G=0.9089, D=0.6763
+Epoch 4/100: G=1.0535, D=0.6550
+Epoch 5/100: G=1.3650, D=0.6104
+Epoch 6/100: G=1.6180, D=0.5548
+Epoch 7/100: G=1.6804, D=0.5307
+Epoch 8/100: G=1.7735, D=0.5076
+Epoch 9/100: G=1.8927, D=0.4892
+Epoch 10/100: G=1.8660, D=0.4900
+Epoch 11/100: G=1.9778, D=0.4686
+Epoch 12/100: G=2.0373, D=0.4456
+Epoch 13/100: G=2.1573, D=0.4346
+Epoch 14/100: G=2.1300, D=0.4249
+Epoch 15/100: G=2.1596, D=0.4296
+Epoch 16/100: G=2.2694, D=0.4085
+Epoch 17/100: G=2.3092, D=0.3976
+Epoch 18/100: G=2.4101, D=0.3803
+Epoch 19/100: G=2.3430, D=0.3916
+Epoch 20/100: G=2.3963, D=0.3804
+Epoch 21/100: G=2.4955, D=0.3630
+Epoch 22/100: G=2.6221, D=0.3560
+Epoch 23/100: G=2.6109, D=0.3534
+Epoch 24/100: G=2.6158, D=0.3522
+Epoch 25/100: G=2.6194, D=0.3661
+Epoch 26/100: G=2.5792, D=0.3583
+Epoch 27/100: G=2.5661, D=0.3697
+Epoch 28/100: G=2.5090, D=0.3503
+Epoch 29/100: G=2.7415, D=0.3413
+Epoch 30/100: G=2.6654, D=0.3316
+Epoch 31/100: G=2.7092, D=0.3358
+Epoch 32/100: G=2.8311, D=0.3151
+Epoch 33/100: G=2.8657, D=0.3192
+Epoch 34/100: G=2.9304, D=0.3111
+Epoch 35/100: G=2.9431, D=0.3019
+Epoch 36/100: G=2.9927, D=0.3065
+Epoch 37/100: G=2.9180, D=0.3241
+Epoch 38/100: G=2.8013, D=0.3276
+Epoch 39/100: G=3.0753, D=0.3014
+Epoch 40/100: G=2.9034, D=0.3139
+Epoch 41/100: G=2.9058, D=0.3118
+Epoch 42/100: G=2.9703, D=0.3056
+Epoch 43/100: G=3.0268, D=0.2948
+Epoch 44/100: G=3.0664, D=0.2974
+Epoch 45/100: G=3.0787, D=0.2897
+Epoch 46/100: G=3.0570, D=0.2937
+Epoch 47/100: G=3.1495, D=0.2867
+Epoch 48/100: G=3.2016, D=0.2868
+Epoch 49/100: G=3.0699, D=0.3019
+Epoch 50/100: G=2.9937, D=0.3054
+Epoch 51/100: G=3.1269, D=0.2891
+Epoch 52/100: G=3.1078, D=0.2931
+Epoch 53/100: G=3.2134, D=0.2829
+Epoch 54/100: G=3.2220, D=0.2794
+Epoch 55/100: G=3.1104, D=0.3009
+Epoch 56/100: G=3.0932, D=0.2953
+Epoch 57/100: G=3.0543, D=0.2854
+Epoch 58/100: G=3.2022, D=0.2814
+Epoch 59/100: G=3.1509, D=0.2873
+Epoch 60/100: G=3.2009, D=0.2755
+Epoch 61/100: G=3.2884, D=0.2740
+Epoch 62/100: G=3.1828, D=0.2795
+Epoch 63/100: G=3.3216, D=0.2614
+Epoch 64/100: G=3.3760, D=0.2660
+Epoch 65/100: G=3.3054, D=0.2621
+Epoch 66/100: G=3.3916, D=0.2617
+Epoch 67/100: G=3.2684, D=0.2672
+Epoch 68/100: G=3.4410, D=0.2638
+Epoch 69/100: G=3.4332, D=0.2597
+Epoch 70/100: G=3.3560, D=0.2604
+Epoch 71/100: G=3.5152, D=0.2485
+Epoch 72/100: G=3.4213, D=0.2597
+Epoch 73/100: G=3.3881, D=0.2642
+Epoch 74/100: G=3.4055, D=0.2562
+Epoch 75/100: G=3.3899, D=0.2518
+Epoch 76/100: G=3.4619, D=0.2571
+Epoch 77/100: G=3.5573, D=0.2497
+Epoch 78/100: G=3.5488, D=0.2453
+Epoch 79/100: G=3.5050, D=0.2478
+Epoch 80/100: G=3.4605, D=0.2564
+Epoch 81/100: G=3.5392, D=0.2458
+Epoch 82/100: G=3.5541, D=0.2449
+Epoch 83/100: G=3.4699, D=0.2496
+Epoch 84/100: G=3.5648, D=0.2442
+Epoch 85/100: G=3.6835, D=0.2386
+Epoch 86/100: G=3.6031, D=0.2448
+Epoch 87/100: G=3.5838, D=0.2478
+Epoch 88/100: G=3.6309, D=0.2400
+Epoch 89/100: G=3.5975, D=0.2428
+Epoch 90/100: G=3.5440, D=0.2474
+Epoch 91/100: G=3.5936, D=0.2399
+Epoch 92/100: G=3.7001, D=0.2337
+Epoch 93/100: G=3.6761, D=0.2424
+Epoch 94/100: G=3.5649, D=0.2442
+Epoch 95/100: G=3.6013, D=0.2457
+Epoch 96/100: G=3.4943, D=0.2443
+Epoch 97/100: G=3.6418, D=0.2409
+Epoch 98/100: G=3.5592, D=0.2464
+Epoch 99/100: G=3.6452, D=0.2342
+Epoch 100/100: G=3.6763, D=0.2398
+Diagnostics: {'generated_samples': 64, 'mean_pixel_standard_deviation': 0.0036358125507831573, 'mean_pairwise_mse_32x32': 4.807497680303641e-05, 'mean_nearest_training_preview_mse_32x32': 0.0035975980572402477, 'reference_training_slices': 256, 'note': 'Small diversity or repeated images may indicate mode collapse. These numbers do not establish realism, novelty or absence of memorisation.', 'training_seconds': 839.4881786559708, 'image_size': 128, 'slices_per_volume': 0, 'checkpoint_selection': 'Last training epoch; no automatic claim of best realism.'}
+Results: /home/Student/s4994398/Lab_2/part4_results/gan_train_20260915_015100_121849
+Finished Tue Sep 15 02:05:05 AEST 2026

@@ -327,7 +327,7 @@ def double_conv(in_channels, out_channels):
 # U-Net predicts a category for every pixel: [B, 1, H, W] -> [B, classes, H, W].
 # U-NET ARCHITECTURE: encoder shrinks maps; decoder restores resolution with encoder skips.
 # Input [B,1,H,W] -> logits [B,4,H,W]. This predicts a category at every pixel.
-# Skips concatenate features along channels; unlike ResNet shortcuts, they do not add them.
+# Skips concatenate features along channels.
 class UNet(nn.Module):
     def __init__(self, classes, base_channels=32):
         super().__init__()
@@ -335,8 +335,10 @@ class UNet(nn.Module):
         widths = [base_channels * (2**i) for i in range(5)]
         # ModuleList registers parameters for optimisation; forward explicitly loops
         # over these layers. It does not automatically apply them like Sequential.
+        # Each double_conv preserves spatial size while increasing channel count.
         self.encoders = nn.ModuleList([double_conv(1, widths[0])] +
                                      [double_conv(widths[i-1], widths[i]) for i in range(1, 5)])
+        # The bottleneck is the deepest encoder output; it is the first decoder input.
         # Each transposed convolution doubles resolution and reduces channel count.
         self.up = nn.ModuleList([nn.ConvTranspose2d(widths[i+1], widths[i], 2, 2)
                                  for i in range(3, -1, -1)])

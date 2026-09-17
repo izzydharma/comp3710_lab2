@@ -388,7 +388,7 @@ def gradient_penalty(critic, real, fake):
         alpha = torch.rand(len(real), 1, 1, 1, device=real.device)
         # Interpolated images require gradients for the penalty; detach real/fake to avoid backprop into G.
         interpolated = (alpha * real.detach().float() +
-                        (1 - alpha) * fake.detach().float()).requires_grad_(True)
+             +          (1 - alpha) * fake.detach().float()).requires_grad_(True)
         # Each score depends on the mixed image; we measure its sensitivity to every input pixel next.
         scores = critic(interpolated)
         # Compute the gradient of each score with respect to its interpolated image.

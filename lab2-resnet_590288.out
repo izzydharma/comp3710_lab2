@@ -1,0 +1,269 @@
+Job 590288 on a100-9, started Mon Sep 14 23:58:55 AEST 2026
+Mon Sep 14 23:58:55 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 590.48.01              Driver Version: 590.48.01      CUDA Version: 13.1     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-PCIE-40GB          Off |   00000000:0B:00.0 Off |                    0 |
+| N/A   36C    P0             34W /  250W |       0MiB /  40960MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+PyTorch: 2.14.0+cu130
+Built for CUDA: 13.0
+GPU: NVIDIA A100-PCIE-40GB
+Device: cuda GPU: NVIDIA A100-PCIE-40GB Mixed precision: True
+Train / validation / test: 45000 5000 10000
+ResNet18(
+  (stem): Sequential(
+    (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+    (2): ReLU()
+  )
+  (stages): Sequential(
+    (0): BasicBlock(
+      (main): Sequential(
+        (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (shortcut): Identity()
+    )
+    (1): BasicBlock(
+      (main): Sequential(
+        (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (shortcut): Identity()
+    )
+    (2): BasicBlock(
+      (main): Sequential(
+        (0): Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (shortcut): Sequential(
+        (0): Conv2d(64, 128, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (3): BasicBlock(
+      (main): Sequential(
+        (0): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (shortcut): Identity()
+    )
+    (4): BasicBlock(
+      (main): Sequential(
+        (0): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (shortcut): Sequential(
+        (0): Conv2d(128, 256, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (5): BasicBlock(
+      (main): Sequential(
+        (0): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (shortcut): Identity()
+    )
+    (6): BasicBlock(
+      (main): Sequential(
+        (0): Conv2d(256, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (shortcut): Sequential(
+        (0): Conv2d(256, 512, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+    )
+    (7): BasicBlock(
+      (main): Sequential(
+        (0): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (4): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, bias=True, track_running_stats=True)
+      )
+      (shortcut): Identity()
+    )
+  )
+  (pool): AdaptiveAvgPool2d(output_size=1)
+  (fc): Linear(in_features=512, out_features=10, bias=True)
+)
+Trainable parameters: 11173962
+Epoch   1/100: train=25.81% val=38.26% loss=2.1101 elapsed=18.0s
+Epoch   2/100: train=43.67% val=47.96% loss=1.5189 elapsed=24.2s
+Epoch   3/100: train=54.00% val=61.34% loss=1.2705 elapsed=30.5s
+Epoch   4/100: train=62.07% val=59.26% loss=1.0564 elapsed=35.6s
+Epoch   5/100: train=67.98% val=67.76% loss=0.9010 elapsed=42.0s
+Epoch   6/100: train=72.67% val=72.98% loss=0.7799 elapsed=48.2s
+Epoch   7/100: train=76.18% val=71.86% loss=0.6804 elapsed=53.3s
+Epoch   8/100: train=78.72% val=73.04% loss=0.6152 elapsed=59.6s
+Epoch   9/100: train=80.12% val=76.30% loss=0.5724 elapsed=65.8s
+Epoch  10/100: train=81.70% val=77.90% loss=0.5372 elapsed=71.9s
+Epoch  11/100: train=82.15% val=78.14% loss=0.5176 elapsed=78.0s
+Epoch  12/100: train=82.87% val=80.78% loss=0.4977 elapsed=84.2s
+Epoch  13/100: train=83.51% val=78.82% loss=0.4785 elapsed=89.2s
+Epoch  14/100: train=84.64% val=80.18% loss=0.4542 elapsed=94.2s
+Epoch  15/100: train=84.77% val=83.36% loss=0.4448 elapsed=100.4s
+Epoch  16/100: train=85.15% val=80.94% loss=0.4325 elapsed=105.6s
+Epoch  17/100: train=85.59% val=84.20% loss=0.4183 elapsed=111.8s
+Epoch  18/100: train=85.98% val=83.02% loss=0.4115 elapsed=116.9s
+Epoch  19/100: train=86.66% val=83.02% loss=0.3929 elapsed=121.9s
+Epoch  20/100: train=86.82% val=77.84% loss=0.3858 elapsed=127.0s
+Epoch  21/100: train=87.09% val=77.70% loss=0.3772 elapsed=132.1s
+Epoch  22/100: train=87.35% val=82.90% loss=0.3681 elapsed=137.2s
+Epoch  23/100: train=87.61% val=84.28% loss=0.3596 elapsed=143.5s
+Epoch  24/100: train=87.70% val=84.10% loss=0.3564 elapsed=148.5s
+Epoch  25/100: train=88.02% val=84.96% loss=0.3473 elapsed=154.5s
+Epoch  26/100: train=88.22% val=78.86% loss=0.3425 elapsed=159.6s
+Epoch  27/100: train=88.55% val=85.60% loss=0.3330 elapsed=166.0s
+Epoch  28/100: train=88.68% val=85.70% loss=0.3292 elapsed=173.0s
+Epoch  29/100: train=89.04% val=85.02% loss=0.3206 elapsed=178.0s
+Epoch  30/100: train=89.10% val=86.68% loss=0.3167 elapsed=184.4s
+Epoch  31/100: train=89.27% val=85.04% loss=0.3127 elapsed=189.4s
+Epoch  32/100: train=89.54% val=85.40% loss=0.3055 elapsed=194.4s
+Epoch  33/100: train=89.70% val=87.06% loss=0.2974 elapsed=200.7s
+Epoch  34/100: train=89.72% val=81.80% loss=0.2977 elapsed=205.8s
+Epoch  35/100: train=89.99% val=87.96% loss=0.2910 elapsed=212.6s
+Epoch  36/100: train=90.52% val=85.46% loss=0.2754 elapsed=217.6s
+Epoch  37/100: train=90.40% val=85.82% loss=0.2796 elapsed=222.6s
+Epoch  38/100: train=90.24% val=82.78% loss=0.2788 elapsed=227.7s
+Epoch  39/100: train=90.74% val=83.92% loss=0.2723 elapsed=232.7s
+Epoch  40/100: train=91.14% val=80.80% loss=0.2598 elapsed=237.8s
+Epoch  41/100: train=91.08% val=84.98% loss=0.2578 elapsed=242.9s
+Epoch  42/100: train=91.43% val=86.90% loss=0.2502 elapsed=247.8s
+Epoch  43/100: train=91.46% val=83.98% loss=0.2483 elapsed=252.8s
+Epoch  44/100: train=91.65% val=85.64% loss=0.2425 elapsed=257.7s
+Epoch  45/100: train=92.08% val=84.26% loss=0.2350 elapsed=262.7s
+Epoch  46/100: train=92.04% val=86.76% loss=0.2294 elapsed=267.6s
+Epoch  47/100: train=92.25% val=86.26% loss=0.2264 elapsed=272.5s
+Epoch  48/100: train=92.40% val=84.50% loss=0.2224 elapsed=277.5s
+Epoch  49/100: train=92.75% val=88.84% loss=0.2127 elapsed=283.6s
+Epoch  50/100: train=92.90% val=89.64% loss=0.2069 elapsed=289.8s
+Epoch  51/100: train=93.16% val=87.54% loss=0.2013 elapsed=294.7s
+Epoch  52/100: train=93.28% val=86.60% loss=0.1940 elapsed=299.7s
+Epoch  53/100: train=93.41% val=89.30% loss=0.1911 elapsed=304.8s
+Epoch  54/100: train=93.81% val=87.90% loss=0.1816 elapsed=309.9s
+Epoch  55/100: train=93.78% val=89.20% loss=0.1794 elapsed=314.9s
+Epoch  56/100: train=94.12% val=87.80% loss=0.1706 elapsed=320.0s
+Epoch  57/100: train=94.46% val=87.98% loss=0.1597 elapsed=325.2s
+Epoch  58/100: train=94.55% val=90.04% loss=0.1599 elapsed=331.5s
+Epoch  59/100: train=94.74% val=90.14% loss=0.1538 elapsed=337.9s
+Epoch  60/100: train=95.13% val=90.42% loss=0.1414 elapsed=344.2s
+Epoch  61/100: train=95.22% val=90.82% loss=0.1374 elapsed=350.6s
+Epoch  62/100: train=95.51% val=91.02% loss=0.1328 elapsed=356.8s
+Epoch  63/100: train=95.74% val=90.62% loss=0.1257 elapsed=361.9s
+Epoch  64/100: train=96.19% val=90.12% loss=0.1140 elapsed=366.8s
+Epoch  65/100: train=95.84% val=91.00% loss=0.1192 elapsed=371.9s
+Epoch  66/100: train=96.33% val=90.90% loss=0.1060 elapsed=377.0s
+Epoch  67/100: train=96.65% val=91.60% loss=0.0981 elapsed=383.3s
+Epoch  68/100: train=96.94% val=91.26% loss=0.0898 elapsed=388.3s
+Epoch  69/100: train=97.32% val=91.38% loss=0.0812 elapsed=393.4s
+Epoch  70/100: train=97.32% val=90.92% loss=0.0779 elapsed=398.6s
+Epoch  71/100: train=97.53% val=92.34% loss=0.0726 elapsed=404.9s
+Epoch  72/100: train=97.90% val=91.48% loss=0.0642 elapsed=410.0s
+Epoch  73/100: train=97.99% val=92.76% loss=0.0591 elapsed=416.3s
+Epoch  74/100: train=98.43% val=92.20% loss=0.0475 elapsed=421.3s
+Epoch  75/100: train=98.56% val=92.24% loss=0.0444 elapsed=426.4s
+Epoch  76/100: train=98.65% val=92.58% loss=0.0416 elapsed=431.5s
+Epoch  77/100: train=99.00% val=93.44% loss=0.0309 elapsed=437.9s
+Epoch  78/100: train=99.16% val=93.20% loss=0.0270 elapsed=443.0s
+Epoch  79/100: train=99.30% val=93.60% loss=0.0228 elapsed=449.2s
+Epoch  80/100: train=99.40% val=93.78% loss=0.0204 elapsed=455.4s
+Epoch  81/100: train=99.61% val=94.08% loss=0.0144 elapsed=461.6s
+Epoch  82/100: train=99.59% val=94.02% loss=0.0142 elapsed=466.7s
+Epoch  83/100: train=99.75% val=94.60% loss=0.0099 elapsed=473.1s
+Epoch  84/100: train=99.82% val=94.48% loss=0.0086 elapsed=478.3s
+Epoch  85/100: train=99.84% val=94.66% loss=0.0072 elapsed=484.5s
+Epoch  86/100: train=99.91% val=94.94% loss=0.0051 elapsed=490.8s
+Epoch  87/100: train=99.94% val=95.22% loss=0.0041 elapsed=497.0s
+Epoch  88/100: train=99.94% val=95.02% loss=0.0037 elapsed=502.0s
+Epoch  89/100: train=99.96% val=95.06% loss=0.0034 elapsed=507.1s
+Epoch  90/100: train=99.95% val=95.34% loss=0.0035 elapsed=513.5s
+Epoch  91/100: train=99.97% val=95.20% loss=0.0028 elapsed=518.4s
+Epoch  92/100: train=99.97% val=95.06% loss=0.0029 elapsed=523.4s
+Epoch  93/100: train=99.96% val=95.12% loss=0.0029 elapsed=528.5s
+Epoch  94/100: train=99.97% val=95.08% loss=0.0027 elapsed=533.5s
+Epoch  95/100: train=99.98% val=95.20% loss=0.0024 elapsed=538.5s
+Epoch  96/100: train=99.97% val=95.14% loss=0.0025 elapsed=543.7s
+Epoch  97/100: train=99.98% val=95.36% loss=0.0024 elapsed=550.1s
+Epoch  98/100: train=99.98% val=95.24% loss=0.0023 elapsed=555.2s
+Epoch  99/100: train=99.99% val=95.20% loss=0.0024 elapsed=560.3s
+Epoch 100/100: train=99.99% val=95.22% loss=0.0023 elapsed=565.3s
+              precision    recall  f1-score   support
+
+    airplane       0.95      0.97      0.96      1000
+  automobile       0.97      0.98      0.97      1000
+        bird       0.95      0.92      0.94      1000
+         cat       0.88      0.88      0.88      1000
+        deer       0.95      0.95      0.95      1000
+         dog       0.89      0.91      0.90      1000
+        frog       0.96      0.96      0.96      1000
+       horse       0.98      0.96      0.97      1000
+        ship       0.97      0.97      0.97      1000
+       truck       0.97      0.96      0.97      1000
+
+    accuracy                           0.95     10000
+   macro avg       0.95      0.95      0.95     10000
+weighted avg       0.95      0.95      0.95     10000
+
+{
+  "task": "cifar10",
+  "test_accuracy": 0.9458,
+  "test_loss": 0.20441802978515625,
+  "best_validation_accuracy": 0.9536,
+  "selected_epoch": 97,
+  "seconds_to_selected_checkpoint": 548.828559125308,
+  "total_training_seconds": 565.2915613083169,
+  "validation_threshold_seconds": {
+    "over_90_percent": 330.2828886802308,
+    "at_least_94_percent": 460.43963551707566
+  },
+  "train_samples": 45000,
+  "validation_samples": 5000,
+  "test_samples": 10000,
+  "gpu": "NVIDIA A100-PCIE-40GB",
+  "timing_definition": "Training wall time includes validation and checkpoint saves; excludes downloads, model setup, final test and plots.",
+  "evaluation": "Best checkpoint selected only by validation accuracy; final test evaluated after training.",
+  "over_90_percent_test": true,
+  "at_least_94_percent_test": true,
+  "at_least_94_percent_and_total_training_under_360s": false,
+  "note": "Validation threshold times are not test accuracy benchmarks. Laptop results do not replace the Rangpur demonstration."
+}
+Results saved to: /home/Student/s4994398/Lab_2/part3_results/cifar10_20260914_235905_520735
+Finished Tue Sep 15 00:45:34 AEST 2026
